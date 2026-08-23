@@ -87,3 +87,5 @@
 - [ ] Vercel Function’ın gerçek `/api/*` yolunu korumasını sağlayarak tRPC ve Agent route’larını canlı hedefte doğrulamak.
 - [ ] Vercel API adapter rewrite’ı üzerinden Express’e aktarılan özgün yolun tRPC, OAuth ve imzalı Agent rotalarında doğru işlendiğini canlı hedefte doğrulamak.
 - [x] Vercel Function bundle’ında ESM-only bağımlılıkların yüklendiğini ve tRPC sağlık rotasının 500 yerine uygulama yanıtı verdiğini doğrulamak.
+- [ ] Vercel alan adında Güvenli Giriş düğmesinin OAuth yönlendirmesi başlatmama nedenini teşhis etmek.
+- [ ] Vercel için istemci OAuth başlangıç yapılandırmasını düzeltmek ve düğme etkileşimini canlı hedefte doğrulamak.
