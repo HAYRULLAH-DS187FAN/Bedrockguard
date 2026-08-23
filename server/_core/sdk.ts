@@ -8,7 +8,7 @@ import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
 import { QA_AUTH_OPEN_ID, isLocalQaAuthRequest, qaAuthUser } from "../guard/qa";
-import { localAdminUserFromOpenId } from "./localAdmin";
+import { localAdminUserFromOpenId, serverOwnerUserFromOpenId } from "./localAdmin";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -300,6 +300,11 @@ class SDKServer {
     // accepted only while the matching admin environment configuration exists.
     const localAdmin = localAdminUserFromOpenId(session.openId);
     if (localAdmin) return localAdmin;
+
+    // Owner-key sessions are short lived and become invalid as soon as the
+    // SERVER_OWNER_ACCESS_KEY environment secret is rotated.
+    const serverOwner = serverOwnerUserFromOpenId(session.openId);
+    if (serverOwner) return serverOwner;
 
     if (session.openId.startsWith(CRON_OPEN_ID_PREFIX)) {
       const userInfo = await this.getUserInfoWithJwt(sessionToken ?? "");

@@ -94,3 +94,7 @@
 - [ ] Giriş ekranını Vercel yönetici oturum akışına bağlamak; korumalı rota ve logout davranışını doğrulamak.
 - [ ] Vercel’de gerekli yönetici giriş sırlarını ekleyip production login → dashboard → yenileme → logout akışını doğrulamak.
 - [ ] Vercel yönetici girişini zayıf parola veya kısa JWT oturum sırrıyla etkinleşmeyecek şekilde doğrulamak.
+- [ ] Sunucu sahibine özel erişim anahtarının süre, kullanım sınırı ve yönetici rolü politikasını tasarlamak.
+- [ ] Erişim anahtarını Vercel ortam sırrı üzerinden doğrulayan ve sınırlı süreli oturum üreten güvenli giriş prosedürünü eklemek.
+- [ ] Giriş ekranına erişim anahtarı yolunu ekleyip yanlış/eksik anahtar, geçerli giriş, yenileme ve logout davranışlarını test etmek.
+- [ ] Sunucu sahibi erişim anahtarını Vercel’de ekleyip production akışını doğrulamak.

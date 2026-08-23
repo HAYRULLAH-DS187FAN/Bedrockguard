@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
-import { verifyLocalAdminLogin } from "./_core/localAdmin";
+import { verifyLocalAdminLogin, verifyServerOwnerAccessKey } from "./_core/localAdmin";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import {
@@ -80,6 +80,35 @@ export const appRouter = router({
       ctx.res.cookie(COOKIE_NAME, token, {
         ...getSessionCookieOptions(ctx.req, true),
         maxAge: 12 * 60 * 60 * 1000,
+      });
+      return { user: result.user };
+    }),
+    ownerKeyLogin: publicProcedure.input(z.object({
+      accessKey: z.string().min(1).max(256),
+    })).mutation(async ({ input, ctx }) => {
+      const forwardedFor = ctx.req.headers["x-forwarded-for"];
+      const requestIp = Array.isArray(forwardedFor)
+        ? forwardedFor[0]
+        : typeof forwardedFor === "string"
+          ? forwardedFor.split(",")[0]
+          : ctx.req.ip;
+      const result = verifyServerOwnerAccessKey({ ...input, requestIp });
+      if (!result.ok) {
+        const message = result.reason === "not_configured"
+          ? "Sunucu sahibi erişim anahtarı henüz yapılandırılmadı."
+          : result.reason === "locked"
+            ? "Çok fazla başarısız deneme yapıldı. Lütfen daha sonra tekrar deneyin."
+            : "Erişim anahtarı geçersiz.";
+        throw new TRPCError({ code: result.reason === "not_configured" ? "PRECONDITION_FAILED" : "UNAUTHORIZED", message });
+      }
+      const token = await sdk.signSession({
+        openId: result.user.openId,
+        appId: "bedrockguard-owner-key",
+        name: result.user.name ?? "Sunucu Sahibi",
+      }, { expiresInMs: 4 * 60 * 60 * 1000 });
+      ctx.res.cookie(COOKIE_NAME, token, {
+        ...getSessionCookieOptions(ctx.req, true),
+        maxAge: 4 * 60 * 60 * 1000,
       });
       return { user: result.user };
     }),
