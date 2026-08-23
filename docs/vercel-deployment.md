@@ -33,7 +33,7 @@ Bu proje artık aynı React/Tailwind arayüzünü, tRPC API’sini, imzalı Agen
 
 ## Rota davranışı
 
-`vercel.json`, SPA derin bağlantılarını (`/players/...`, `/observations`, `/settings`) `index.html`’e yönlendirir; `/api/*` ve `/manus-storage/*` bu yönlendirmeden hariç tutulur. Vite SPA’larında derin bağlantı için rewrite gerektiği Vercel tarafından belgelenmiştir.[2] Kök Express Function aynı API rota sözleşmesini işler.
+`vercel.json`, SPA derin bağlantılarını (`/players/...`, `/observations`, `/settings`) `index.html`’e yönlendirir. Vercel’in Vite framework algısında API rotalarının statik çıktıdan ayrı kalması için `/api/*` ve `/manus-storage/*` yolları `api/index.ts` Express Function’ına açıkça yönlendirilir. Vite SPA’larında derin bağlantı için rewrite gerektiği Vercel tarafından belgelenmiştir.[2]
 
 | Yol grubu | Vercel’de davranış |
 |---|---|

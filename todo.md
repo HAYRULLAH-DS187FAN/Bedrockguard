@@ -83,3 +83,4 @@
 - [ ] Bağlı GitHub hesabında BedrockGuard için depo hedefini belirlemek ve kaynak kodu aktarımına hazırlamak.
 - [ ] GitHub deposunu Vercel projesine bağlamak; preview deployment’ını başlatmak ve build loglarını incelemek.
 - [ ] Kullanıcının Vercel ortam değişkenleri ve OAuth callback URI ayarlarından sonra canlı API/oturum akışını doğrulamak.
+- [ ] Vercel Vite deployment’ında `/api/trpc` rotasının 404 dönmesine neden olan function yönlendirmesini giderip yeniden doğrulamak.
