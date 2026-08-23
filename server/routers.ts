@@ -73,6 +73,9 @@ export const appRouter = router({
   servers: router({
     list: adminProcedure.query(({ ctx }) => isLocalQaRequest(ctx.req) ? [qaServer] : listGuardServers()),
     create: adminProcedure.input(z.object({ name: z.string().min(3).max(120), slug: safeSlug })).mutation(async ({ input, ctx }) => {
+      if (isLocalQaRequest(ctx.req)) {
+        return { server: qaServer, rawAgentSecret: "qa_local_no_agent" };
+      }
       const result = await createGuardServer(input);
       await writeAudit({ serverId: result.server.id, actorUserId: ctx.user.id, action: "server.secret_issued", summary: "Agent kimlik bilgisi ilk kez oluşturuldu." });
       return result;

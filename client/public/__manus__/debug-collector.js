@@ -482,7 +482,7 @@
       method: method.toUpperCase(),
       url: url,
       request: {
-        headers: requestHeaders,
+        headers: sanitizeValue(requestHeaders),
         body: init.body ? sanitizeValue(tryParseJson(init.body)) : null,
       },
       response: null,
@@ -500,7 +500,7 @@
         entry.response = {
           status: response.status,
           statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
+          headers: sanitizeValue(Object.fromEntries(response.headers.entries())),
           body: null,
         };
 

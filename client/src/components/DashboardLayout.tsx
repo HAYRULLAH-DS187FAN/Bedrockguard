@@ -28,10 +28,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, loading, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const qaMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get("qa") === "1";
+  const qaAuthMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get("qaAuth") === "1";
   const exitQa = () => {
     const url = new URL(window.location.href);
     url.searchParams.delete("qa");
     window.location.assign(`${url.pathname}${url.search}${url.hash}`);
+  };
+  const loginWithQaAuth = async () => {
+    const response = await fetch("/api/qa-auth/login", { method: "POST", headers: { "x-bedrockguard-qa-auth": "local-auth" }, credentials: "include" });
+    if (response.ok) window.location.reload();
   };
 
   if (loading) return <div className="min-h-screen bg-[#101412]" />;
@@ -43,6 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <h1 className="font-display text-3xl font-semibold">BedrockGuard</h1>
           <p className="mt-3 leading-6 text-stone-400">Güvenlik operasyon merkezine erişmek için kimliğinizi doğrulayın.</p>
           <Button onClick={() => startLogin()} className="mt-7 w-full bg-emerald-400 font-semibold text-[#102014] hover:bg-emerald-300">Güvenli giriş</Button>
+          {qaAuthMode ? <Button onClick={loginWithQaAuth} variant="outline" className="mt-3 w-full border-amber-300/30 bg-amber-300/[0.08] text-amber-100 hover:bg-amber-300/[0.14]">Yerel QA oturumuyla giriş</Button> : null}
         </section>
       </div>
     );

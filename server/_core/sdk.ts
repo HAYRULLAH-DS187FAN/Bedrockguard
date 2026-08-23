@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { QA_AUTH_OPEN_ID, isLocalQaAuthRequest, qaAuthUser } from "../guard/qa";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -255,7 +256,10 @@ class SDKServer {
     } as GetUserInfoWithJwtResponse;
   }
 
-  async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
+  async authenticateRequest(
+    req: Request,
+    isProduction = ENV.isProduction
+  ): Promise<AuthenticatedUser> {
     // 1. Prefer the session cookie (regular OAuth login).
     const cookies = this.parseCookies(req.headers.cookie);
     let sessionToken = cookies.get(COOKIE_NAME);
@@ -274,6 +278,21 @@ class SDKServer {
 
     if (!session) {
       throw ForbiddenError("Invalid session cookie");
+    }
+
+    // Local QA authentication is opt-in per request, accepted only outside
+    // production, and never queries or writes the production user table.
+    if (isLocalQaAuthRequest(req, isProduction)) {
+      if (session.openId !== QA_AUTH_OPEN_ID) {
+        throw ForbiddenError("Invalid local QA session");
+      }
+      return { ...qaAuthUser, lastSignedIn: new Date() };
+    }
+
+    // A QA-issued session must never be interpreted as a regular account when
+    // the application runs in production, even if a crafted header is sent.
+    if (isProduction && session.openId === QA_AUTH_OPEN_ID) {
+      throw ForbiddenError("QA sessions are disabled in production");
     }
 
     if (session.openId.startsWith(CRON_OPEN_ID_PREFIX)) {
@@ -311,13 +330,38 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
+    // An owner row may have been created before owner configuration was
+    // available. Heal that legacy state during authenticated requests so a
+    // valid preview/OAuth session cannot be trapped behind a stale `user` role.
+    if (shouldPromoteOwner(sessionUserId, user.role)) {
+      await db.upsertUser({
+        openId: user.openId,
+        role: "admin",
+        lastSignedIn: signedInAt,
+      });
+      const promotedUser = await db.getUserByOpenId(sessionUserId);
+      if (!promotedUser) {
+        throw ForbiddenError("User not found after role update");
+      }
+      user = promotedUser;
+    }
+
+    const authenticatedUser = user;
     await db.upsertUser({
-      openId: user.openId,
+      openId: authenticatedUser.openId,
       lastSignedIn: signedInAt,
     });
 
-    return user;
+    return authenticatedUser;
   }
+}
+
+export function shouldPromoteOwner(
+  openId: string,
+  role: "user" | "admin",
+  ownerOpenId = ENV.ownerOpenId
+) {
+  return Boolean(ownerOpenId) && openId === ownerOpenId && role !== "admin";
 }
 
 const CRON_OPEN_ID_PREFIX = "cron_";

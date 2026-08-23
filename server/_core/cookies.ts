@@ -22,7 +22,8 @@ function isSecureRequest(req: Request) {
 }
 
 export function getSessionCookieOptions(
-  req: Request
+  req: Request,
+  isProduction = ENV.isProduction
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
   // const hostname = req.hostname;
   // const shouldSetDomain =
@@ -43,6 +44,10 @@ export function getSessionCookieOptions(
     httpOnly: true,
     path: "/",
     sameSite: "none",
-    secure: isSecureRequest(req),
+    // SameSite=None cookies are rejected by browsers unless Secure is also set.
+    // The managed production proxy can terminate TLS before Express, so do not
+    // let a missing forwarded header downgrade a production session cookie.
+    secure: isProduction || isSecureRequest(req),
   };
 }
+import { ENV } from "./env";

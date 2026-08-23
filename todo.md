@@ -36,3 +36,24 @@
 - [x] QA verilerini anında kaldırmak ve QA/production ayrımını doğrulamak için temizleme yolunu eklemek.
 - [x] Veri dolu dashboard, oyuncu detay, olay geçmişi, yaptırım, whitelist ve ayarlar ekranlarını 360px, 390px, 412px, 768px, 1024px ve masaüstünde doğrulamak.
 - [x] QA çalışma şekli, test matrisi, mobil düzeltmeler ve kalan riskleri güncel dokümantasyona eklemek.
+- [x] Preview alanında OAuth callback, redirect URL, session çerezi ve auth API akışını hassas veri kaydetmeden teşhis etmek.
+- [x] Route guard ve istemci oturum durumunun başarılı girişten sonra login ekranına dönme kök nedenini düzeltmek.
+- [x] Preview frontend/backend origin, SameSite/Secure cookie, CORS ve storage fallback davranışını doğrulamak.
+- [x] Login → dashboard → yenileme → doğrudan rota → logout → tekrar login akışını test etmek; harici OAuth portalı planlı bakımda olduğundan canlı redirect testi sınırlılığını raporlamak.
+- [x] Authentication kök nedeni, değiştirilen dosyalar, test sonuçları ve kalan sınırları dokümante etmek.
+- [x] Üretim callback isteğinde proxy HTTPS başlığı eksik olsa bile session çerezinin `Secure` niteliğini korumak ve bunu otomatik testle doğrulamak.
+- [x] Session token üretim ve doğrulama zincirini otomatik testle doğrulamak; harici OAuth portalı erişilemezse sınırlılığı raporlamak.
+- [x] Preview otomatik oturumunda kullanıcı kimliğinin başarılı ancak yönetici yetkisinin yetersiz olduğu durumu açıkça ele almak.
+- [x] İstemci debug toplama akışında Authorization bearer değerinin kayıtlara düşmesini engellemek.
+- [x] Düzeltme öncesindeki yerel debug kayıtlarında kalmış olabilecek Authorization header’larını temizlemek ve yeni kayıtların maskeli olduğunu doğrulamak.
+- [x] OAuth sağlayıcısı erişilebilir olduğunda canlı preview’de login → callback → dashboard → yenileme → doğrudan rota → logout → tekrar login akışını yürütmek ve sahip rolü iyileştirmesini gerçek oturumda doğrulamak; sağlayıcı bakımı nedeniyle teslimde ertelendi ve dokümante edildi.
+- [x] Sadece geliştirmede etkinleşen, production auth ve gerçek kullanıcı verilerinden ayrılmış QA authentication modunu tasarlamak.
+- [x] QA test kullanıcısıyla login simülasyonu ve imzalı QA session üretimini eklemek.
+- [x] QA session ile dashboard, yenileme ve korumalı rota erişimini; logout sonrasında erişim engelini otomatik test etmek.
+- [x] QA authentication modunda gerçek OAuth, production veritabanı, gerçek kullanıcı, Agent veya Discord yan etkisi olmadığını güvence altına almak.
+- [x] QA authentication çalışma biçimi, kök neden, değiştirilen dosyalar, test sonucu ve canlı OAuth sınırını dokümante etmek.
+- [x] QA authentication modunda sunucu oluşturma dahil tüm admin mutasyonlarını production veritabanına yazmadan no-op/simülasyon olarak çalıştırmak ve test etmek.
+- [x] QA auth modunda ayar kaydetme, yaptırım isteme/onaylama ve whitelist silme mutasyonlarının tamamını yazmasız olarak otomatik test etmek.
+- [x] QA authentication header’ının production modunda reddedildiğini otomatik testle doğrulamak.
+- [x] Production benzeri istekte QA login endpoint’inin 404 döndürdüğünü ve QA header’ının context/protected rota erişimi üretmediğini entegrasyon testiyle doğrulamak.
+- [x] Production benzeri QA header’ının context’te kullanıcı üretmediğini ve admin rotasına erişim vermediğini entegrasyon testiyle doğrulamak.

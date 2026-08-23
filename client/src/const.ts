@@ -17,7 +17,11 @@ export const startLogin = () => {
   const appId = import.meta.env.VITE_APP_ID;
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
 
-  const nonce = crypto.randomUUID();
+  // randomUUID is absent on some older Safari/WebView versions. getRandomValues
+  // preserves nonce entropy without weakening the OAuth CSRF binding.
+  const nonce = typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : Array.from(crypto.getRandomValues(new Uint32Array(4))).map(value => value.toString(16)).join("-");
   document.cookie = `${OAUTH_STATE_COOKIE}=${nonce}; Path=/; Max-Age=600; SameSite=None; Secure`;
   const state = encodeOAuthState({ redirectUri, nonce });
 

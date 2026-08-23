@@ -1,5 +1,6 @@
 import { DEFAULT_MODERATION_CONFIG } from "../../shared/guard";
 import { ENV } from "../_core/env";
+import type { User } from "../../drizzle/schema";
 import type { listEventDetections, listPlayers, listRecentEvents, listRecentSanctions, listWhitelist, publicServer } from "../db";
 
 type QaServer = ReturnType<typeof publicServer>;
@@ -11,15 +12,36 @@ type QaWhitelist = Awaited<ReturnType<typeof listWhitelist>>;
 
 export const QA_SERVER_ID = "a1b2c3d4-1000-4000-8000-000000000001";
 export const QA_MODE_HEADER = "x-bedrockguard-qa";
+export const QA_AUTH_HEADER = "x-bedrockguard-qa-auth";
+export const QA_AUTH_OPEN_ID = "qa-local-auth-open-id";
 const now = Date.now();
 const at = (minutesAgo: number) => new Date(now - minutesAgo * 60_000);
+
+export const qaAuthUser: User = {
+  id: 0,
+  openId: QA_AUTH_OPEN_ID,
+  name: "QA Authentication Admin",
+  email: null,
+  loginMethod: "local-qa",
+  role: "admin",
+  createdAt: at(1),
+  updatedAt: at(1),
+  lastSignedIn: at(1),
+};
 
 /**
  * This scenario is deliberately memory-only. It is available only while the local
  * dev server runs and cannot be enabled when NODE_ENV is production.
  */
 export function isLocalQaRequest(req: { header: (name: string) => string | undefined }) {
-  return !ENV.isProduction && req.header(QA_MODE_HEADER) === "local-scenario";
+  return !ENV.isProduction && (req.header(QA_MODE_HEADER) === "local-scenario" || isLocalQaAuthRequest(req));
+}
+
+export function isLocalQaAuthRequest(
+  req: { header: (name: string) => string | undefined },
+  isProduction = ENV.isProduction
+) {
+  return !isProduction && req.header(QA_AUTH_HEADER) === "local-auth";
 }
 
 const settings = {
