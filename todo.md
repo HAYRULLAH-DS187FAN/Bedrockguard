@@ -80,10 +80,10 @@
 - [ ] Vercel hedefinde OAuth callback, API, statik istemci ve veritabanı bağlantısını doğrulamak; dağıtım/kullanım kılavuzunu yazmak. Kılavuz ve build doğrulaması tamamlandı; canlı Vercel doğrulaması kullanıcıya ait proje, sırlar ve izinli callback URI’leri gerektirir.
 - [ ] Vercel preview veya `vercel dev` üzerinde SPA rewrite, `/api/trpc`, `/api/agent/*` ve MySQL/TiDB bağlantısını kullanıcıya ait ortam değişkenleriyle doğrulamak.
 - [ ] OAuth sağlayıcısına Vercel callback URI eklendikten sonra gerçek Vercel OAuth callback → dashboard → yenileme → logout akışını doğrulamak.
-- [ ] Bağlı GitHub hesabında BedrockGuard için depo hedefini belirlemek ve kaynak kodu aktarımına hazırlamak.
-- [ ] GitHub deposunu Vercel projesine bağlamak; preview deployment’ını başlatmak ve build loglarını incelemek.
+- [x] Bağlı GitHub hesabında BedrockGuard için depo hedefini belirlemek ve kaynak kodu aktarımına hazırlamak.
+- [x] GitHub deposunu Vercel projesine bağlamak; production deployment’ını başlatmak ve build loglarını incelemek.
 - [ ] Kullanıcının Vercel ortam değişkenleri ve OAuth callback URI ayarlarından sonra canlı API/oturum akışını doğrulamak.
-- [ ] Vercel Vite deployment’ında `/api/trpc` rotasının 404 dönmesine neden olan function yönlendirmesini giderip yeniden doğrulamak.
+- [x] Vercel Vite deployment’ında `/api/trpc` rotasının 404 dönmesine neden olan function yönlendirmesini giderip yeniden doğrulamak.
 - [ ] Vercel Function’ın gerçek `/api/*` yolunu korumasını sağlayarak tRPC ve Agent route’larını canlı hedefte doğrulamak.
 - [ ] Vercel API adapter rewrite’ı üzerinden Express’e aktarılan özgün yolun tRPC, OAuth ve imzalı Agent rotalarında doğru işlendiğini canlı hedefte doğrulamak.
-- [ ] Vercel Function bundle’ında ESM-only bağımlılıkların yüklendiğini ve tRPC sağlık rotasının 500 yerine uygulama yanıtı verdiğini doğrulamak.
+- [x] Vercel Function bundle’ında ESM-only bağımlılıkların yüklendiğini ve tRPC sağlık rotasının 500 yerine uygulama yanıtı verdiğini doğrulamak.
