@@ -33,7 +33,7 @@ Bu proje artık aynı React/Tailwind arayüzünü, tRPC API’sini, imzalı Agen
 
 ## Rota davranışı
 
-`vercel.json`, SPA derin bağlantılarını (`/players/...`, `/observations`, `/settings`) `index.html`’e yönlendirir ve `/api/*` ile `/manus-storage/*` yollarını bu fallback’in dışında tutar. `api/[...path].cjs` Vercel’in dinamik Function route’udur; özgün API yolunu koruyarak Express’in tRPC, OAuth, Agent ve storage proxy yönlendirmelerine iletir. `build:vercel`, iç TypeScript modüllerini Vercel Function’da çözüm sorununa yol açmaması için `server/vercel.ts` üzerinden tek bir CommonJS bundle’ına dönüştürür. Vite SPA’larında derin bağlantı için rewrite gerektiği Vercel tarafından belgelenmiştir.[2]
+`vercel.json`, SPA derin bağlantılarını (`/players/...`, `/observations`, `/settings`) `index.html`’e yönlendirir ve `/api/*` ile `/manus-storage/*` yollarını bu fallback’in dışında tutar. Vercel’in doğrulanmış `api/index.cjs` Function girişine yapılan rewrite, özgün yolu güvenli query parametreleriyle adapter’a taşır; adapter Express çağrısından önce tRPC, OAuth, Agent ve storage proxy yollarını geri yükler. `build:vercel`, iç TypeScript modüllerini Vercel Function’da çözüm sorununa yol açmaması için `server/vercel.ts` üzerinden tek bir CommonJS bundle’ına dönüştürür. Vite SPA’larında derin bağlantı için rewrite gerektiği Vercel tarafından belgelenmiştir.[2]
 
 | Yol grubu | Vercel’de davranış |
 |---|---|

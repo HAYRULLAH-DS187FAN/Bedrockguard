@@ -5,6 +5,14 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "/api/index?__bg_route=api&__bg_path=:path*"
+    },
+    {
+      "source": "/manus-storage/:path*",
+      "destination": "/api/index?__bg_route=storage&__bg_path=:path*"
+    },
+    {
       "source": "/((?!api(?:/|$)|manus-storage(?:/|$)).*)",
       "destination": "/index.html"
     }
