@@ -84,3 +84,4 @@
 - [ ] GitHub deposunu Vercel projesine bağlamak; preview deployment’ını başlatmak ve build loglarını incelemek.
 - [ ] Kullanıcının Vercel ortam değişkenleri ve OAuth callback URI ayarlarından sonra canlı API/oturum akışını doğrulamak.
 - [ ] Vercel Vite deployment’ında `/api/trpc` rotasının 404 dönmesine neden olan function yönlendirmesini giderip yeniden doğrulamak.
+- [ ] Vercel Function’ın gerçek `/api/*` yolunu korumasını sağlayarak tRPC ve Agent route’larını canlı hedefte doğrulamak.
