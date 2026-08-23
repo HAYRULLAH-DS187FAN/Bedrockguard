@@ -75,3 +75,8 @@
 - [x] Bedrock-aware gözlem panelinde platform profili, kanıt niteliği, bastırma nedeni ve gölge mod durumunu göstermek.
 - [x] P1–P3 gözlem modu için platform ayrımı, yaptırımsızlık, kanıt/bağlam ve veri güvenliği testlerini yazmak.
 - [x] MC4FUN gölge mod pilot kurulumu, veri minimizasyonu, kill switch ve test geri bildirim sürecini dokümante etmek.
+- [x] Mevcut Express/tRPC, OAuth, imzalı Agent API ve MySQL bağımlılıklarını Vercel serverless çalışma modeli açısından incelemek.
+- [x] Vercel Functions giriş noktası, yönlendirme yapılandırması ve üretim ortam değişkeni sözleşmesini mevcut kullanıcı deneyimini koruyacak şekilde eklemek.
+- [ ] Vercel hedefinde OAuth callback, API, statik istemci ve veritabanı bağlantısını doğrulamak; dağıtım/kullanım kılavuzunu yazmak. Kılavuz ve build doğrulaması tamamlandı; canlı Vercel doğrulaması kullanıcıya ait proje, sırlar ve izinli callback URI’leri gerektirir.
+- [ ] Vercel preview veya `vercel dev` üzerinde SPA rewrite, `/api/trpc`, `/api/agent/*` ve MySQL/TiDB bağlantısını kullanıcıya ait ortam değişkenleriyle doğrulamak.
+- [ ] OAuth sağlayıcısına Vercel callback URI eklendikten sonra gerçek Vercel OAuth callback → dashboard → yenileme → logout akışını doğrulamak.
