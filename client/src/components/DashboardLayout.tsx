@@ -27,6 +27,12 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const [location, setLocation] = useLocation();
+  const qaMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get("qa") === "1";
+  const exitQa = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("qa");
+    window.location.assign(`${url.pathname}${url.search}${url.hash}`);
+  };
 
   if (loading) return <div className="min-h-screen bg-[#101412]" />;
   if (!user) {
@@ -77,15 +83,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </aside>
-      <main className="min-h-screen pb-20 lg:ml-[264px] lg:pb-10">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-white/[0.07] bg-[#101412]/90 px-5 backdrop-blur lg:px-9">
+      <main className="min-h-[100dvh] pb-[calc(6rem+env(safe-area-inset-bottom))] lg:ml-[264px] lg:pb-10">
+        <header className="sticky top-0 z-10 flex min-h-16 items-center justify-between border-b border-white/[0.07] bg-[#101412]/90 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] backdrop-blur lg:px-9">
           <div className="flex items-center gap-2 text-sm text-stone-500"><ChevronLeft className="h-4 w-4 text-emerald-300" /><span>Güvenlik işlemleri kayıt altında</span></div>
-          <div className="flex items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/[0.06] px-3 py-1.5 text-xs font-medium text-emerald-200"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />Kontrol katmanı etkin</div>
+          {qaMode ? <button onClick={exitQa} className="flex min-h-9 items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/[0.08] px-3 text-xs font-semibold text-amber-100"><span className="h-1.5 w-1.5 rounded-full bg-amber-200" />Yerel QA · Çık</button> : <div className="flex items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/[0.06] px-3 py-1.5 text-xs font-medium text-emerald-200"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />Kontrol katmanı etkin</div>}
         </header>
         {children}
       </main>
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-white/[0.08] bg-[#0d100e]/95 p-2 backdrop-blur lg:hidden">
-        {navItems.slice(0, 4).map(item => <button key={item.path} onClick={() => setLocation(item.path)} className={`grid place-items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] ${location === item.path ? "text-emerald-300" : "text-stone-500"}`}><item.icon className="h-4 w-4" />{item.label.split(" ")[0]}</button>)}
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-white/[0.08] bg-[#0d100e]/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur lg:hidden">
+        {navItems.slice(0, 4).map(item => <button key={item.path} onClick={() => setLocation(item.path)} className={`grid min-h-11 min-w-11 place-items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] ${location === item.path ? "text-emerald-300" : "text-stone-500"}`}><item.icon className="h-4 w-4" />{item.label.split(" ")[0]}</button>)}
       </nav>
     </div>
   );

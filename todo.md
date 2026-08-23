@@ -22,3 +22,17 @@
 - [x] AI-only sinyallerin tek başına uyarı, inceleme, kick veya geçici ban üretememesini zorunlu kılmak ve test etmek.
 - [x] Masaüstü ve mobil yönetim paneli düzenleri için doğrulanabilir responsive QA kanıtı üretmek.
 - [x] Responsive QA artefaktının proje içinde bulunduğunu ve içerdiği denetimleri doğrulamak.
+- [x] Android Chrome ve iOS Safari odaklı mobil erişim hatalarının kök nedenini console, network ve runtime günlüklerinden teşhis etmek.
+- [x] Viewport, güvenli alan, CSS breakpoint, taşma ve dokunmatik etkileşim sorunlarını mevcut tasarımı koruyarak düzeltmek.
+- [x] Mobil tarayıcılarda çalışmayan JavaScript API’lerini uyumlu yaklaşımlarla değiştirmek ve backend/API erişimini doğrulamak.
+- [x] 360px, 390px, 412px, 768px, 1024px ve masaüstü görünümlerinde giriş ve yönetim ekranlarını doğrulamak.
+- [x] Mobil uyumluluk testi, tespit edilen kök neden, değişiklikler ve kalan riskleri dokümante etmek.
+- [x] Oyuncu detay/olay geçmişi dahil tüm yönetim ekranlarını hedef genişlik matrisiyle doğrulamak ve sonuçları QA raporuna eklemek.
+- [x] Oyuncu detay isteği bulunamadığında veya hata verdiğinde mobilde yükleme yerine anlaşılır hata durumunu göstermek.
+- [x] Gerçek veriyle oyuncu detay ve olay geçmişi ekranını tüm hedef genişliklerde doğrulamak; ardından QA matrisini yalnızca doğrulanmış sonuçlarla güncellemek.
+- [x] Production veritabanına yazmayan, yalnızca yerel geliştirme oturumunda çalışan ayrı bir QA veri senaryosu kurmak.
+- [x] QA/Test etiketli oyuncular, olaylar, kanıt zaman çizelgesi, şüphe puanları, yaptırımlar ve dashboard istatistiklerini üretmek.
+- [x] QA senaryosunda gerçek Agent çağrısı, Discord bildirimi veya yaptırım yürütmesi yapılmamasını güvence altına almak.
+- [x] QA verilerini anında kaldırmak ve QA/production ayrımını doğrulamak için temizleme yolunu eklemek.
+- [x] Veri dolu dashboard, oyuncu detay, olay geçmişi, yaptırım, whitelist ve ayarlar ekranlarını 360px, 390px, 412px, 768px, 1024px ve masaüstünde doğrulamak.
+- [x] QA çalışma şekli, test matrisi, mobil düzeltmeler ve kalan riskleri güncel dokümantasyona eklemek.

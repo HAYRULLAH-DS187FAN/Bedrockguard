@@ -25,6 +25,7 @@ import {
   writeAudit,
 } from "./db";
 import { DEFAULT_MODERATION_CONFIG } from "../shared/guard";
+import { isLocalQaRequest, qaScenario, qaServer, QA_SERVER_ID } from "./guard/qa";
 
 const idInput = z.object({ serverId: z.string().uuid() });
 const safeSlug = z.string().min(3).max(80).regex(/^[a-z0-9-]+$/);
@@ -52,7 +53,8 @@ export const appRouter = router({
     }),
   }),
   dashboard: router({
-    overview: adminProcedure.input(z.object({ serverId: z.string().uuid().optional() }).optional()).query(async ({ input }) => {
+    overview: adminProcedure.input(z.object({ serverId: z.string().uuid().optional() }).optional()).query(async ({ input, ctx }) => {
+      if (isLocalQaRequest(ctx.req)) return qaScenario.overview();
       const [servers, players, events, sanctionRows] = await Promise.all([listGuardServers(), listPlayers(input?.serverId), listRecentEvents(input?.serverId), listRecentSanctions(input?.serverId)]);
       return {
         servers,
@@ -69,18 +71,23 @@ export const appRouter = router({
     }),
   }),
   servers: router({
-    list: adminProcedure.query(listGuardServers),
+    list: adminProcedure.query(({ ctx }) => isLocalQaRequest(ctx.req) ? [qaServer] : listGuardServers()),
     create: adminProcedure.input(z.object({ name: z.string().min(3).max(120), slug: safeSlug })).mutation(async ({ input, ctx }) => {
       const result = await createGuardServer(input);
       await writeAudit({ serverId: result.server.id, actorUserId: ctx.user.id, action: "server.secret_issued", summary: "Agent kimlik bilgisi ilk kez oluşturuldu." });
       return result;
     }),
-    getConfiguration: adminProcedure.input(idInput).query(async ({ input }) => {
+    getConfiguration: adminProcedure.input(idInput).query(async ({ input, ctx }) => {
+      if (isLocalQaRequest(ctx.req)) {
+        if (input.serverId !== QA_SERVER_ID) throw new TRPCError({ code: "NOT_FOUND" });
+        return { server: { id: qaServer.id, name: qaServer.name, slug: qaServer.slug, agentKeyId: qaServer.agentKeyId, discordConfigured: false }, settings: qaServer.settings };
+      }
       const server = await getServerById(input.serverId);
       if (!server) throw new TRPCError({ code: "NOT_FOUND" });
       return { server: { id: server.id, name: server.name, slug: server.slug, agentKeyId: server.agentKeyId, discordConfigured: Boolean(server.discordWebhookEncrypted) }, settings: parseModerationConfig(server.settingsJson) };
     }),
     updateConfiguration: adminProcedure.input(configInput).mutation(async ({ input, ctx }) => {
+      if (isLocalQaRequest(ctx.req)) return { success: true, qa: true };
       if (!(input.settings.thresholds.watch < input.settings.thresholds.intervention && input.settings.thresholds.intervention <= input.settings.thresholds.review && input.settings.thresholds.review <= input.settings.thresholds.tempBan)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Puan eşikleri artan sırada olmalıdır." });
       }
@@ -90,8 +97,13 @@ export const appRouter = router({
     }),
   }),
   players: router({
-    list: adminProcedure.input(z.object({ serverId: z.string().uuid().optional() }).optional()).query(({ input }) => listPlayers(input?.serverId)),
-    detail: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96) })).query(async ({ input }) => {
+    list: adminProcedure.input(z.object({ serverId: z.string().uuid().optional() }).optional()).query(({ input, ctx }) => isLocalQaRequest(ctx.req) ? qaScenario.players(input?.serverId) : listPlayers(input?.serverId)),
+    detail: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96) })).query(async ({ input, ctx }) => {
+      if (isLocalQaRequest(ctx.req)) {
+        const detail = qaScenario.detail(input.serverId, input.playerUuid);
+        if (!detail) throw new TRPCError({ code: "NOT_FOUND", message: "QA oyuncusu bulunamadı." });
+        return detail;
+      }
       const player = await getPlayer(input.serverId, input.playerUuid);
       if (!player) throw new TRPCError({ code: "NOT_FOUND", message: "Oyuncu bulunamadı." });
       const [events, sanctions] = await Promise.all([listPlayerEvents(input.serverId, input.playerUuid), listPlayerSanctions(input.serverId, input.playerUuid)]);
@@ -102,19 +114,21 @@ export const appRouter = router({
   moderation: router({
     defaults: adminProcedure.query(() => DEFAULT_MODERATION_CONFIG),
     requestManualSanction: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96), action: z.enum(["warning", "kick", "temp_ban", "review"]), reason: z.string().min(5).max(500), durationMinutes: z.number().int().min(5).max(43200).optional() })).mutation(async ({ input, ctx }) => {
+      if (isLocalQaRequest(ctx.req)) return { id: "qa-simulated-request", action: input.action, status: "pending_confirmation", qa: true } as any;
       const player = await getPlayer(input.serverId, input.playerUuid);
       if (!player) throw new TRPCError({ code: "NOT_FOUND", message: "Oyuncu bulunamadı." });
       return createSanction({ ...input, playerName: player.playerName, requiresConfirmation: true, requestedByUserId: ctx.user.id });
     }),
     confirmSanction: adminProcedure.input(z.object({ sanctionId: z.string().uuid() })).mutation(async ({ input, ctx }) => {
+      if (isLocalQaRequest(ctx.req)) return { success: true, qa: true };
       await confirmSanction({ sanctionId: input.sanctionId, actorUserId: ctx.user.id });
       return { success: true };
     }),
   }),
   whitelist: router({
-    list: adminProcedure.input(idInput).query(({ input }) => listWhitelist(input.serverId)),
-    add: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96), playerName: z.string().min(1).max(64), reason: z.string().min(3).max(240) })).mutation(({ input, ctx }) => addWhitelistEntry({ ...input, actorUserId: ctx.user.id })),
-    remove: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96) })).mutation(({ input, ctx }) => removeWhitelistEntry({ ...input, actorUserId: ctx.user.id })),
+    list: adminProcedure.input(idInput).query(({ input, ctx }) => isLocalQaRequest(ctx.req) ? qaScenario.whitelist(input.serverId) : listWhitelist(input.serverId)),
+    add: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96), playerName: z.string().min(1).max(64), reason: z.string().min(3).max(240) })).mutation(({ input, ctx }) => isLocalQaRequest(ctx.req) ? Promise.resolve() : addWhitelistEntry({ ...input, actorUserId: ctx.user.id })),
+    remove: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96) })).mutation(({ input, ctx }) => isLocalQaRequest(ctx.req) ? Promise.resolve() : removeWhitelistEntry({ ...input, actorUserId: ctx.user.id })),
   }),
 });
 
