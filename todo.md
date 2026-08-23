@@ -80,3 +80,6 @@
 - [ ] Vercel hedefinde OAuth callback, API, statik istemci ve veritabanı bağlantısını doğrulamak; dağıtım/kullanım kılavuzunu yazmak. Kılavuz ve build doğrulaması tamamlandı; canlı Vercel doğrulaması kullanıcıya ait proje, sırlar ve izinli callback URI’leri gerektirir.
 - [ ] Vercel preview veya `vercel dev` üzerinde SPA rewrite, `/api/trpc`, `/api/agent/*` ve MySQL/TiDB bağlantısını kullanıcıya ait ortam değişkenleriyle doğrulamak.
 - [ ] OAuth sağlayıcısına Vercel callback URI eklendikten sonra gerçek Vercel OAuth callback → dashboard → yenileme → logout akışını doğrulamak.
+- [ ] Bağlı GitHub hesabında BedrockGuard için depo hedefini belirlemek ve kaynak kodu aktarımına hazırlamak.
+- [ ] GitHub deposunu Vercel projesine bağlamak; preview deployment’ını başlatmak ve build loglarını incelemek.
+- [ ] Kullanıcının Vercel ortam değişkenleri ve OAuth callback URI ayarlarından sonra canlı API/oturum akışını doğrulamak.
