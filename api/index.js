@@ -1,4 +1,4 @@
-const app = require("./server.cjs").default;
+import app from "./server.cjs";
 
 function restoreOriginalPath(req) {
   const requestUrl = new URL(req.url || "/", "http://localhost");
@@ -15,7 +15,7 @@ function restoreOriginalPath(req) {
   req.url = `${prefix}/${suffix}${query ? `?${query}` : ""}`;
 }
 
-module.exports = (req, res) => {
+export default function handler(req, res) {
   restoreOriginalPath(req);
   return app(req, res);
-};
+}
