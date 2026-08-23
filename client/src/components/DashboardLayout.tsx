@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin } from "@/const";
+import { useState } from "react";
 import {
   BellRing,
   BookOpenCheck,
@@ -27,8 +27,11 @@ const navItems = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, loginWithPassword } = useAuth();
   const [location, setLocation] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
   const qaMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get("qa") === "1";
   const qaAuthMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get("qaAuth") === "1";
   const exitQa = () => {
@@ -40,6 +43,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const response = await fetch("/api/qa-auth/login", { method: "POST", headers: { "x-bedrockguard-qa-auth": "local-auth" }, credentials: "include" });
     if (response.ok) window.location.reload();
   };
+  const submitLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoginError("");
+    try {
+      await loginWithPassword(email, password);
+      setPassword("");
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : "Giriş yapılamadı.");
+    }
+  };
 
   if (loading) return <div className="min-h-screen bg-[#101412]" />;
   if (!user) {
@@ -49,7 +62,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400 text-[#0e1511]"><ShieldCheck className="h-6 w-6" /></div>
           <h1 className="font-display text-3xl font-semibold">BedrockGuard</h1>
           <p className="mt-3 leading-6 text-stone-400">Güvenlik operasyon merkezine erişmek için kimliğinizi doğrulayın.</p>
-          <Button onClick={() => startLogin()} className="mt-7 w-full bg-emerald-400 font-semibold text-[#102014] hover:bg-emerald-300">Güvenli giriş</Button>
+          <form className="mt-7 space-y-4" onSubmit={submitLogin}>
+            <label className="grid gap-1.5 text-sm font-medium text-stone-200">Yönetici e-postası
+              <input value={email} onChange={event => setEmail(event.target.value)} type="email" autoComplete="username" required className="min-h-11 rounded-xl border border-white/10 bg-black/20 px-3 text-base text-white outline-none transition focus:border-emerald-300/70 focus:ring-2 focus:ring-emerald-300/20" placeholder="admin@ornek.com" />
+            </label>
+            <label className="grid gap-1.5 text-sm font-medium text-stone-200">Parola
+              <input value={password} onChange={event => setPassword(event.target.value)} type="password" autoComplete="current-password" required className="min-h-11 rounded-xl border border-white/10 bg-black/20 px-3 text-base text-white outline-none transition focus:border-emerald-300/70 focus:ring-2 focus:ring-emerald-300/20" placeholder="••••••••••••" />
+            </label>
+            {loginError ? <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-300/[0.08] px-3 py-2 text-sm text-rose-100">{loginError}</p> : null}
+            <Button type="submit" disabled={loading} className="w-full bg-emerald-400 font-semibold text-[#102014] hover:bg-emerald-300 disabled:opacity-60">{loading ? "Giriş yapılıyor…" : "Güvenli giriş"}</Button>
+          </form>
           {qaAuthMode ? <Button onClick={loginWithQaAuth} variant="outline" className="mt-3 w-full border-amber-300/30 bg-amber-300/[0.08] text-amber-100 hover:bg-amber-300/[0.14]">Yerel QA oturumuyla giriş</Button> : null}
         </section>
       </div>

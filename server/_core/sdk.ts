@@ -8,6 +8,7 @@ import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
 import { QA_AUTH_OPEN_ID, isLocalQaAuthRequest, qaAuthUser } from "../guard/qa";
+import { localAdminUserFromOpenId } from "./localAdmin";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -294,6 +295,11 @@ class SDKServer {
     if (isProduction && session.openId === QA_AUTH_OPEN_ID) {
       throw ForbiddenError("QA sessions are disabled in production");
     }
+
+    // Vercel local-admin sessions never call the Manus identity service and are
+    // accepted only while the matching admin environment configuration exists.
+    const localAdmin = localAdminUserFromOpenId(session.openId);
+    if (localAdmin) return localAdmin;
 
     if (session.openId.startsWith(CRON_OPEN_ID_PREFIX)) {
       const userInfo = await this.getUserInfoWithJwt(sessionToken ?? "");

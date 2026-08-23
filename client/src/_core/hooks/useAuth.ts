@@ -27,6 +27,12 @@ export function useAuth(options?: UseAuthOptions) {
     },
   });
 
+  const localLoginMutation = trpc.auth.localLogin.useMutation({
+    onSuccess: ({ user }) => {
+      utils.auth.me.setData(undefined, user);
+    },
+  });
+
   const logout = useCallback(async () => {
     try {
       await logoutMutation.mutateAsync();
@@ -50,6 +56,11 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [logoutMutation, utils]);
 
+  const loginWithPassword = useCallback(async (email: string, password: string) => {
+    await localLoginMutation.mutateAsync({ email, password });
+    await utils.auth.me.invalidate();
+  }, [localLoginMutation, utils]);
+
   const state = useMemo(() => {
     // Storage can be unavailable in Safari private browsing or a restricted
     // WebView. It is only a non-authoritative UI cache and must not break auth.
@@ -61,8 +72,8 @@ export function useAuth(options?: UseAuthOptions) {
     } catch {}
     return {
       user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
+      loading: meQuery.isLoading || logoutMutation.isPending || localLoginMutation.isPending,
+      error: meQuery.error ?? logoutMutation.error ?? localLoginMutation.error ?? null,
       isAuthenticated: Boolean(meQuery.data),
     };
   }, [
@@ -71,6 +82,8 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.isLoading,
     logoutMutation.error,
     logoutMutation.isPending,
+    localLoginMutation.error,
+    localLoginMutation.isPending,
   ]);
 
   useEffect(() => {
@@ -98,5 +111,6 @@ export function useAuth(options?: UseAuthOptions) {
     ...state,
     refresh: () => meQuery.refetch(),
     logout,
+    loginWithPassword,
   };
 }

@@ -87,5 +87,9 @@
 - [ ] Vercel Function’ın gerçek `/api/*` yolunu korumasını sağlayarak tRPC ve Agent route’larını canlı hedefte doğrulamak.
 - [ ] Vercel API adapter rewrite’ı üzerinden Express’e aktarılan özgün yolun tRPC, OAuth ve imzalı Agent rotalarında doğru işlendiğini canlı hedefte doğrulamak.
 - [x] Vercel Function bundle’ında ESM-only bağımlılıkların yüklendiğini ve tRPC sağlık rotasının 500 yerine uygulama yanıtı verdiğini doğrulamak.
-- [ ] Vercel alan adında Güvenli Giriş düğmesinin OAuth yönlendirmesi başlatmama nedenini teşhis etmek.
+- [x] Vercel alan adında Güvenli Giriş düğmesinin OAuth yönlendirmesi başlatmama nedenini teşhis etmek. Kanıtlanan kök neden: Vercel’in yayımladığı istemci paketi `VITE_OAUTH_PORTAL_URL` ile `VITE_APP_ID` değerlerini boş derledi; nonce yardımcılarının istemciye içe aktarımı da düzeltildi.
 - [ ] Vercel için istemci OAuth başlangıç yapılandırmasını düzeltmek ve düğme etkileşimini canlı hedefte doğrulamak.
+- [ ] Manus OAuth’tan bağımsız Vercel yönetici kimlik doğrulama mimarisini, gerekli sırları ve oturum güvenlik sınırlarını tasarlamak.
+- [ ] E-posta/şifre tabanlı yönetici girişini, parola doğrulamasını ve güvenli oturum çerezini uygulamak.
+- [ ] Giriş ekranını Vercel yönetici oturum akışına bağlamak; korumalı rota ve logout davranışını doğrulamak.
+- [ ] Vercel’de gerekli yönetici giriş sırlarını ekleyip production login → dashboard → yenileme → logout akışını doğrulamak.
