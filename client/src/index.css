@@ -175,3 +175,21 @@
     }
   }
 }
+
+html {
+  background: #101412;
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  background-image: radial-gradient(circle at 84% -10%, rgba(52, 211, 153, 0.08), transparent 28%);
+}
+
+.font-display {
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+code,
+pre {
+  font-family: "DM Mono", monospace;
+}

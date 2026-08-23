@@ -1,0 +1,24 @@
+# Project TODO
+
+- [x] Çok sunuculu veri modelini; sunucu kimliği, imzalama anahtarı özeti, sunucu ayarları ve bağımsız olay akışlarını destekleyecek şekilde oluşturmak.
+- [x] Oyuncu kimliği, durum, şüphe puanı, zamanla puan azalması ve whitelist kayıtları için veri katmanını oluşturmak.
+- [x] Olaylar, kurallar, tespit sonuçları, kanıt özetleri, yaptırımlar ve denetim kayıtları için ilişkisel şemayı oluşturmak.
+- [x] Küfür, spam/flood, reklam-link, tehdit/taciz, yasaklı kelime, yetkisiz komut ve şüpheli davranış sinyallerini puanlayan modüler moderasyon motorunu yazmak.
+- [x] Yinelenen içerik, güvenilir/whitelist oyuncu ve düşük güvenli tekil sinyaller için yanlış-pozitif korumalarını eklemek.
+- [x] Puan azalması, olay geçmişi ve tekrar sayısını birlikte kullanarak uyarı, kick, inceleme ve geçici ban kararları üreten yapılandırılabilir karar motorunu yazmak.
+- [x] Her BDS Agent için zaman damgası, nonce ve HMAC imzası doğrulayan; olayları güvenli şekilde alan HTTP API uçlarını eklemek.
+- [x] Agent isteklerinde hız sınırlama, yinelenen olay önleme, veri boyutu sınırı ve hassas alan maskelemesi uygulamak.
+- [x] BDS yanında çalışacak hafif Agent örneği ve BDS olay/veri adaptörü sözleşmesini eklemek.
+- [x] LLM’yi yalnızca yapılandırılabilir destekleyici mesaj risk sinyali olarak çalıştırmak; hiçbir durumda tek başına yaptırım kararı vermemesini güvence altına almak.
+- [x] Discord webhook bildirimleri için yapılandırılabilir, hata yalıtımlı teslim katmanını eklemek.
+- [x] Yetkili Discord yöneticileri için oyuncu durumunu sorgulayabilecek komut/adaptör sözleşmesini hazırlamak.
+- [x] Rol tabanlı yönetici erişimi ile kritik yaptırımlarda gerekçe ve doğrulama gerektiren akışı uygulamak.
+- [x] Online oyuncular, risk sıralaması, son olaylar, yaptırım geçmişi ve sistem durumunu gösteren yönetim panosu oluşturmak.
+- [x] Oyuncu detay, kanıt/zaman çizelgesi, whitelist, kurallar, eşikler, sunucu ayarları ve AI ayarları ekranlarını oluşturmak.
+- [x] Mesaj analizi, spam, puan azalması, yanlış-pozitif korumaları, karar eşikleri, imza doğrulama ve hız sınırlama için otomatik testler yazmak.
+- [x] Örnek yapılandırma, Agent kurulumu, BDS entegrasyon seçenekleri, API sözleşmesi, Discord kurulumu ve güvenlik işletimi içeren README yazmak.
+- [x] Admin panelini masaüstü ve mobil ekranlarda görsel olarak doğrulamak.
+- [x] Agent olay gövdeleri için sıkı toplam boyut, metadata anahtar sayısı ve metadata derinliği sınırları uygulamak.
+- [x] AI-only sinyallerin tek başına uyarı, inceleme, kick veya geçici ban üretememesini zorunlu kılmak ve test etmek.
+- [x] Masaüstü ve mobil yönetim paneli düzenleri için doğrulanabilir responsive QA kanıtı üretmek.
+- [x] Responsive QA artefaktının proje içinde bulunduğunu ve içerdiği denetimleri doğrulamak.

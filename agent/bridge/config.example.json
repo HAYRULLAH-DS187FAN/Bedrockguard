@@ -1,0 +1,6 @@
+{
+  "endpoint": "https://YOUR-BEDROCKGUARD-DOMAIN/api/agent",
+  "agentKeyId": "bgk_replace_with_key_id",
+  "agentSecret": "bg_replace_with_one_time_secret",
+  "pollIntervalMs": 5000
+}

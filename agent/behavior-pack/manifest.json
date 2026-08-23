@@ -1,0 +1,18 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "BedrockGuard Agent",
+    "description": "BedrockGuard event relay adapter",
+    "uuid": "0c9a7b37-6205-4fa7-9c92-32bea7010688",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    { "type": "data", "uuid": "69263e96-51a2-4a2a-a4bd-9a98cab32c00", "version": [1, 0, 0] },
+    { "type": "script", "language": "javascript", "uuid": "92bb981e-1f89-42c3-8b6c-ae58c1f8a083", "entry": "scripts/main.js", "version": [1, 0, 0] }
+  ],
+  "dependencies": [
+    { "module_name": "@minecraft/server", "version": "1.16.0" },
+    { "module_name": "@minecraft/server-net", "version": "1.0.0-beta.1.26.50-preview.26" }
+  ]
+}

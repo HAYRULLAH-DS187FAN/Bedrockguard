@@ -1,33 +1,35 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import DashboardLayout from "@/components/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/lib/trpc";
+import { Activity, ArrowUpRight, Bot, CircleAlert, Radio, Server, ShieldAlert, UserRoundCheck } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useLocation } from "wouter";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
-export default function Home() {
-  // The useAuth hook provides authentication state.
-  // To implement login/logout, call logout(), or start login from an event
-  // handler: onClick={() => startLogin()} (imported from "@/const"). Never call
-  // startLogin() during render (no href={startLogin()}) — it mints a one-time
-  // nonce cookie and must run only at the moment of navigation.
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
+const actionLabel: Record<string, string> = { warning: "Uyarı", kick: "Kick", review: "İnceleme", temp_ban: "Geçici ban" };
 
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
-      </main>
-    </div>
-  );
+function Metric({ label, value, detail, icon: Icon, tone = "emerald" }: { label: string; value: number; detail: string; icon: typeof Activity; tone?: "emerald" | "amber" | "rose" | "sky" }) {
+  const tones = { emerald: "bg-emerald-400/10 text-emerald-300", amber: "bg-amber-300/10 text-amber-200", rose: "bg-rose-400/10 text-rose-200", sky: "bg-sky-300/10 text-sky-200" };
+  return <section className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5"><div className="flex items-start justify-between"><div><p className="text-xs font-medium uppercase tracking-[0.16em] text-stone-500">{label}</p><p className="mt-3 font-display text-3xl font-semibold tracking-tight text-stone-100">{value}</p><p className="mt-2 text-xs text-stone-500">{detail}</p></div><div className={`grid h-10 w-10 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></div></div></section>;
 }
+
+function Onboarding() {
+  const utils = trpc.useUtils();
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [credentials, setCredentials] = useState<{ agentKeyId: string; rawAgentSecret: string } | null>(null);
+  const create = trpc.servers.create.useMutation({ onSuccess: result => { setCredentials({ agentKeyId: result.server.agentKeyId, rawAgentSecret: result.rawAgentSecret }); utils.dashboard.overview.invalidate(); utils.servers.list.invalidate(); toast.success("BDS sunucusu kaydedildi. Agent anahtarını şimdi güvenle saklayın."); }, onError: error => toast.error(error.message) });
+  return <section className="grid gap-6 rounded-3xl border border-emerald-300/15 bg-[radial-gradient(circle_at_top_right,rgba(52,211,153,.14),transparent_35%),#141a16] p-6 lg:grid-cols-[1.1fr_.9fr] lg:p-8"><div><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400 text-[#0d160f]"><Server className="h-5 w-5" /></div><h1 className="mt-5 font-display text-3xl font-semibold tracking-tight">İlk BDS sunucunuzu bağlayın</h1><p className="mt-3 max-w-xl leading-6 text-stone-400">Her BDS için ayrı bir Agent kimliği, imzalama anahtarı ve moderasyon akışı üretilir. Olaylar yalnızca imzalı uç nokta üzerinden kabul edilir.</p><div className="mt-6 grid gap-3 text-sm text-stone-400"><p><span className="mr-2 text-emerald-300">01</span>Sunucuyu kaydedin ve Agent anahtarını alın.</p><p><span className="mr-2 text-emerald-300">02</span>Agent’ı BDS’ye yakın çalıştırın veya Script API adaptörünü kullanın.</p><p><span className="mr-2 text-emerald-300">03</span>Kurallarınızı, eşiklerinizi ve bildirimlerinizi ayarlayın.</p></div></div><div className="rounded-2xl border border-white/[0.08] bg-black/15 p-5"><p className="text-sm font-medium">Sunucu kaydı</p><div className="mt-4 space-y-3"><Input value={name} onChange={e => setName(e.target.value)} placeholder="Örn. Survival TR" className="border-white/10 bg-white/[0.06]" /><Input value={slug} onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="survival-tr" className="border-white/10 bg-white/[0.06]" /><Button disabled={create.isPending || name.trim().length < 3 || slug.length < 3} onClick={() => create.mutate({ name: name.trim(), slug })} className="w-full bg-emerald-400 text-[#102014] hover:bg-emerald-300">{create.isPending ? "Oluşturuluyor…" : "Kimlik bilgisi oluştur"}</Button></div>{credentials && <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-200/[0.07] p-4 text-xs"><p className="font-semibold text-amber-200">Bu gizli anahtar yalnızca şimdi gösterilir.</p><p className="mt-3 break-all text-stone-300"><span className="text-stone-500">Key ID: </span>{credentials.agentKeyId}</p><p className="mt-2 break-all text-stone-300"><span className="text-stone-500">Secret: </span>{credentials.rawAgentSecret}</p><Button variant="outline" onClick={() => navigator.clipboard.writeText(JSON.stringify(credentials, null, 2)).then(() => toast.success("Kimlik bilgileri panoya kopyalandı."))} className="mt-3 h-8 border-white/10 bg-transparent text-xs">Kimlik bilgisini kopyala</Button></div>}</div></section>;
+}
+
+export default function Home() {
+  const [, setLocation] = useLocation();
+  const overview = trpc.dashboard.overview.useQuery();
+  const data = overview.data;
+  return <DashboardLayout><div className="mx-auto max-w-7xl px-5 py-7 lg:px-9"><div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.19em] text-emerald-300/75">Gözetim merkezi</p><h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Adil moderasyon, görünür kanıt.</h1><p className="mt-2 max-w-xl text-sm leading-6 text-stone-500">Otomasyon, yapılandırılmış kurallarla sınırlı kalır. Kritik yaptırımlar yönetici doğrulaması gerektirir.</p></div>{data?.servers.length ? <Button variant="outline" onClick={() => setLocation("/settings")} className="border-white/10 bg-white/[0.03] text-stone-200 hover:bg-white/[0.08]"><SlidersHint />Kuralları ayarla</Button> : null}</div>{overview.isLoading ? <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-36 bg-white/[0.05]" />)}</div> : !data?.servers.length ? <Onboarding /> : <><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Online oyuncu" value={data.metrics.online} detail="Son Agent sinyali" icon={Radio} tone="emerald" /><Metric label="Yüksek risk" value={data.metrics.highRisk} detail="Puan ≥ 70" icon={ShieldAlert} tone="rose" /><Metric label="Doğrulama bekleyen" value={data.metrics.pending} detail="İnsan onayı gerektirir" icon={CircleAlert} tone="amber" /><Metric label="Son 24 saat" value={data.metrics.eventsToday} detail="Kaydedilen olay" icon={Activity} tone="sky" /></div><div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_.85fr]"><section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025]"><header className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4"><div><h2 className="font-display text-lg font-semibold">Risk sıralaması</h2><p className="mt-1 text-xs text-stone-500">Puanlar zamanla otomatik olarak düşer.</p></div><button onClick={() => setLocation("/players")} className="text-xs font-medium text-emerald-300 hover:text-emerald-200">Tüm oyuncular</button></header><div>{data.players.length ? data.players.slice(0, 6).map(player => <button key={player.id} onClick={() => setLocation(`/players/${player.serverId}/${player.playerUuid}`)} className="flex w-full items-center gap-3 border-b border-white/[0.05] px-5 py-3.5 text-left transition hover:bg-white/[0.035] last:border-0"><div className="grid h-8 w-8 place-items-center rounded-lg bg-white/[0.06] text-xs text-stone-300">{player.playerName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{player.playerName}</p><p className="mt-0.5 text-xs text-stone-500">{player.isOnline ? "Online" : "Son görülme kaydı"}</p></div><span className={`rounded-md px-2 py-1 text-xs font-semibold ${player.suspicionScore >= 70 ? "bg-rose-400/10 text-rose-200" : player.suspicionScore >= 40 ? "bg-amber-300/10 text-amber-200" : "bg-emerald-400/10 text-emerald-200"}`}>{player.suspicionScore}/100</span><ArrowUpRight className="h-4 w-4 text-stone-600" /></button>) : <p className="p-7 text-sm text-stone-500">Henüz oyuncu olayı alınmadı.</p>}</div></section><section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025]"><header className="border-b border-white/[0.07] px-5 py-4"><h2 className="font-display text-lg font-semibold">Yaptırım akışı</h2><p className="mt-1 text-xs text-stone-500">Kritik eylemler Agent’a ancak doğrulamadan sonra iletilir.</p></header><div>{data.sanctions.length ? data.sanctions.slice(0, 5).map(sanction => <button key={sanction.id} onClick={() => setLocation("/sanctions")} className="flex w-full items-start gap-3 border-b border-white/[0.05] px-5 py-3.5 text-left last:border-0 hover:bg-white/[0.035]"><div className="mt-0.5 grid h-7 w-7 place-items-center rounded-lg bg-amber-300/10 text-amber-200"><Bot className="h-3.5 w-3.5" /></div><div className="min-w-0 flex-1"><p className="text-sm font-medium">{sanction.playerName} · {actionLabel[sanction.action]}</p><p className="mt-1 line-clamp-1 text-xs text-stone-500">{sanction.reason}</p></div><Badge variant="outline" className="border-white/10 text-[10px] text-stone-400">{sanction.status === "pending_confirmation" ? "Onay bekliyor" : sanction.status}</Badge></button>) : <p className="p-7 text-sm text-stone-500">Henüz yaptırım kaydı yok.</p>}</div></section></div></>}</div></DashboardLayout>;
+}
+
+function SlidersHint() { return <span className="sr-only">Ayarlar</span>; }
