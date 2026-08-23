@@ -10,14 +10,18 @@ import {
   createGuardServer,
   createSanction,
   getPlayer,
+  getPlayerPlatformProfile,
   getServerById,
   listEventDetections,
   listGuardServers,
   listPlayerEvents,
   listPlayerSanctions,
   listPlayers,
+  listPlayersWithPlatformProfiles,
   listRecentEvents,
   listRecentSanctions,
+  listRecentShadowObservations,
+  listPlayerShadowObservations,
   listWhitelist,
   parseModerationConfig,
   removeWhitelistEntry,
@@ -38,6 +42,7 @@ const configInput = z.object({
     safeguards: z.object({ requireDistinctSignalsForIntervention: z.boolean(), autoEnforceWarnings: z.boolean(), allowAutomatedTempBans: z.boolean() }),
     rules: z.object({ profanityWords: z.array(z.string().max(64)).max(100), bannedWords: z.array(z.string().max(64)).max(100), prohibitedCommands: z.array(z.string().max(64)).max(100), spamWindowSeconds: z.number().int().min(5).max(300), spamMessageLimit: z.number().int().min(2).max(30), repeatMessageLimit: z.number().int().min(2).max(20), maxMovementSpeed: z.number().min(1).max(200), maxBlocksPerSecond: z.number().min(1).max(500), maxItemsPerMinute: z.number().min(1).max(10000) }),
     ai: z.object({ enabled: z.boolean(), modelPreference: z.enum(["gpt-5-mini", "default"]), minimumConfidence: z.number().min(0.5).max(1), maxSignalPoints: z.number().int().min(1).max(15) }),
+    bedrockAwareObservation: z.object({ enabled: z.boolean(), enforcementEnabled: z.literal(false), retentionDays: z.number().int().min(1).max(365) }),
   }),
   discordWebhookUrl: z.string().url().max(500).nullable().optional(),
 });
@@ -100,7 +105,7 @@ export const appRouter = router({
     }),
   }),
   players: router({
-    list: adminProcedure.input(z.object({ serverId: z.string().uuid().optional() }).optional()).query(({ input, ctx }) => isLocalQaRequest(ctx.req) ? qaScenario.players(input?.serverId) : listPlayers(input?.serverId)),
+    list: adminProcedure.input(z.object({ serverId: z.string().uuid().optional() }).optional()).query(({ input, ctx }) => isLocalQaRequest(ctx.req) ? qaScenario.playerRows(input?.serverId) : listPlayersWithPlatformProfiles(input?.serverId)),
     detail: adminProcedure.input(z.object({ serverId: z.string().uuid(), playerUuid: z.string().min(3).max(96) })).query(async ({ input, ctx }) => {
       if (isLocalQaRequest(ctx.req)) {
         const detail = qaScenario.detail(input.serverId, input.playerUuid);
@@ -109,10 +114,13 @@ export const appRouter = router({
       }
       const player = await getPlayer(input.serverId, input.playerUuid);
       if (!player) throw new TRPCError({ code: "NOT_FOUND", message: "Oyuncu bulunamadı." });
-      const [events, sanctions] = await Promise.all([listPlayerEvents(input.serverId, input.playerUuid), listPlayerSanctions(input.serverId, input.playerUuid)]);
+      const [events, sanctions, platformProfile, shadowObservations] = await Promise.all([listPlayerEvents(input.serverId, input.playerUuid), listPlayerSanctions(input.serverId, input.playerUuid), getPlayerPlatformProfile(input.serverId, input.playerUuid), listPlayerShadowObservations(input.serverId, input.playerUuid)]);
       const evidence = await Promise.all(events.map(async event => ({ event, detections: await listEventDetections(event.id) })));
-      return { player, evidence, sanctions };
+      return { player, evidence, sanctions, platformProfile, shadowObservations };
     }),
+  }),
+  observations: router({
+    list: adminProcedure.input(z.object({ serverId: z.string().uuid().optional() }).optional()).query(({ input, ctx }) => isLocalQaRequest(ctx.req) ? qaScenario.observations(input?.serverId) : listRecentShadowObservations(input?.serverId)),
   }),
   moderation: router({
     defaults: adminProcedure.query(() => DEFAULT_MODERATION_CONFIG),

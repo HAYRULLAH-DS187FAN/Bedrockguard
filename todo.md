@@ -61,3 +61,17 @@
 - [x] Manuel atanmış admin rolünü OAuth/preview oturum yenilemelerinde koruyan kalıcı sunucu tarafı korumayı uygulamak.
 - [x] Sahip hesabı ve atanan admin hesabı için rol kalıcılığını otomatik testlerle doğrulamak.
 - [x] Rol geri dönüşü kök nedenini ve kalıcı çözümü dokümante etmek.
+- [ ] MC4FUN sunucu sahibinin giriş, OAuth, boş sayfa veya admin rolü aşamalarından hangisinde takıldığını teşhis etmek.
+- [ ] Tespit edilen erişim/yetki engelini mevcut dashboard özelliklerini koruyarak gidermek.
+- [ ] Sunucu sahibinin erişim adımlarını ve doğrulanan çözümü raporlamak.
+- [x] GeyserMC ve Bedrock oyuncu davranış farklılıklarıyla ilgili birincil/teknik kaynakları incelemek.
+- [x] Mevcut BedrockGuard mimarisinin Geyser + Bedrock uyumluluğundaki boşluklarını kod değiştirmeden değerlendirmek.
+- [x] Bedrock-aware detection, veri kaynakları, tolerans/istisna katmanları ve kanıt güven modelini tasarlamak.
+- [x] Mesaj moderasyonu, davranış analizi ve anti-cheat ayrımını; gerçek sunucu test planını ve MVP’den üretime geçiş önceliklerini raporlamak.
+- [x] Geyser/Floodgate, doğrudan Bedrock, Java ve bilinmeyen kökenleri için imzalı platform profili sözleşmesini tasarlamak.
+- [x] Şemalı hareket telemetrisi, ölçüm kaynağı, çevre bağlamı ve kanıt güveni için production veri modelini eklemek.
+- [x] P1–P3 gözlem modunda Speed/Fly/packet-bütünlüğü adaylarını yalnızca kanıt olarak kaydeden; hiçbir yaptırım/puan üretmeyen değerlendirme hattını eklemek.
+- [x] Geyser/Floodgate için platform resolver adaptör sözleşmesi ve kurulum örneği eklemek.
+- [x] Bedrock-aware gözlem panelinde platform profili, kanıt niteliği, bastırma nedeni ve gölge mod durumunu göstermek.
+- [x] P1–P3 gözlem modu için platform ayrımı, yaptırımsızlık, kanıt/bağlam ve veri güvenliği testlerini yazmak.
+- [x] MC4FUN gölge mod pilot kurulumu, veri minimizasyonu, kill switch ve test geri bildirim sürecini dokümante etmek.

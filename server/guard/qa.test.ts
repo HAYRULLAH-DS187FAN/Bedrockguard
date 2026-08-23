@@ -9,15 +9,17 @@ describe("yerel QA senaryosu", () => {
     expect(overview.servers[0]?.name).toMatch(/^\[QA\]/);
     expect(overview.players).toHaveLength(3);
     expect(overview.events).toHaveLength(5);
-    expect(overview.sanctions.map(item => item.action)).toEqual(expect.arrayContaining(["warning", "kick", "temp_ban"]));
+    expect(overview.sanctions.map(item => item.action)).toEqual(["warning"]);
+    expect(overview.shadowObservations).toHaveLength(2);
   });
 
-  it("yüksek riskli QA oyuncusu için çoklu kanıt ve yaptırım geçmişi sağlar", () => {
+  it("yüksek riskli QA oyuncusu için sohbet kanıtı ile yaptırımsız gölge hareket kanıtını ayırır", () => {
     const detail = qaScenario.detail(QA_SERVER_ID, "qa-alex-0001");
     expect(detail?.player.suspicionScore).toBe(84);
     expect(detail?.evidence).toHaveLength(3);
-    expect(detail?.evidence.every(item => item.detections.length > 0)).toBe(true);
-    expect(detail?.sanctions).toHaveLength(2);
+    expect(detail?.evidence.find(item => item.event.type === "movement")?.detections).toEqual([]);
+    expect(detail?.shadowObservations).toEqual([expect.objectContaining({ candidateType: "speed", status: "suppressed", clientFamily: "bedrock_geyser" })]);
+    expect(detail?.sanctions).toHaveLength(0);
   });
 
   it("QA başlığını production dışındaki geliştirme isteğinde kabul eder", () => {

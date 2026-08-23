@@ -15,6 +15,13 @@
       "when": 1787493691302,
       "tag": "0001_perfect_triton",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787517189905,
+      "tag": "0002_misty_black_queen",
+      "breakpoints": true
     }
   ]
 }

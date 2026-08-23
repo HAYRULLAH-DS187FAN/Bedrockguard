@@ -5,13 +5,43 @@ import type { AgentEventPayload } from "../../shared/guard";
 import { processAgentEvent } from "./service";
 import { signatureMatches, signAgentPayload, SlidingWindowRateLimiter, safeLog } from "./security";
 
-const eventSchema = z.object({
+const platformProfileSchema = z.object({
+  clientFamily: z.enum(["java", "bedrock_direct", "bedrock_geyser", "unknown"]),
+  confidence: z.number().min(0).max(1),
+  identityProvider: z.enum(["floodgate", "xbox_live", "java_online", "offline", "unknown"]).optional(),
+  proxyPath: z.enum(["direct_bds", "geyser_standalone", "geyser_velocity", "geyser_bungeecord", "unknown"]).optional(),
+  clientVersion: z.string().max(64).optional(),
+  sessionId: z.string().min(8).max(96).optional(),
+  source: z.enum(["bds", "geyser", "floodgate", "agent"]),
+}).strict();
+
+const shadowObservationSchema = z.object({
+  candidateType: z.enum(["speed", "fly", "packet_integrity", "movement_unknown"]),
+  observedValue: z.number().finite().optional(),
+  expectedMin: z.number().finite().optional(),
+  expectedMax: z.number().finite().optional(),
+  sampleWindowMs: z.number().int().min(100).max(60_000),
+  sampleCount: z.number().int().min(1).max(200),
+  measurementSource: z.enum(["bds_authoritative", "geyser_translated", "proxy_observed", "agent_derived"]),
+  environmentFlags: z.array(z.string().min(1).max(48)).max(16),
+  serverEffects: z.array(z.string().min(1).max(48)).max(16),
+  networkQuality: z.enum(["stable", "jittery", "loss_suspected", "unknown"]),
+  positionTraceDigest: z.string().max(128).optional(),
+}).strict();
+
+export const agentEventInputSchema = z.object({
   eventId: z.string().min(8).max(96),
   occurredAt: z.number().int().positive(),
   type: z.enum(["chat", "command", "player_join", "player_leave", "block_break", "item_gain", "movement", "player_death"]),
   player: z.object({ uuid: z.string().min(3).max(96), name: z.string().min(1).max(64) }),
   content: z.string().max(512).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  platform: platformProfileSchema.optional(),
+  shadowObservation: shadowObservationSchema.optional(),
+}).superRefine((event, ctx) => {
+  if (event.shadowObservation && event.type !== "movement") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["shadowObservation"], message: "shadowObservation yalnızca movement olaylarında kabul edilir" });
+  }
 });
 
 const acknowledgementSchema = z.object({ sanctionId: z.string().uuid(), succeeded: z.boolean(), message: z.string().max(240).optional() });
@@ -78,7 +108,7 @@ export function registerAgentApi(app: Express) {
     try {
       const agent = await authenticateAgent(req, res);
       if (!agent) return;
-      const parsed = eventSchema.safeParse(req.body);
+      const parsed = agentEventInputSchema.safeParse(req.body);
       if (!parsed.success) {
         res.status(400).json({ error: "invalid_event_payload", details: parsed.error.issues.map(issue => issue.path.join(".")) });
         return;

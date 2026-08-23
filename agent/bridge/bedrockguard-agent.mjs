@@ -58,6 +58,10 @@ async function relayEvent(raw) {
     player: { uuid: String(raw.player?.uuid ?? ""), name: String(raw.player?.name ?? "") },
     ...(typeof raw.content === "string" ? { content: raw.content.slice(0, 512) } : {}),
     ...(raw.metadata && typeof raw.metadata === "object" ? { metadata: raw.metadata } : {}),
+    // Geyser/Floodgate adaptörleri bu iki alanı şemalı biçimde üretir. Bridge
+    // bunları yorumlamaz veya ham paket verisi eklemez; imzalı olarak iletir.
+    ...(raw.platform && typeof raw.platform === "object" ? { platform: raw.platform } : {}),
+    ...(raw.shadowObservation && typeof raw.shadowObservation === "object" ? { shadowObservation: raw.shadowObservation } : {}),
   };
   if (!event.type || !event.player.uuid || !event.player.name) throw new Error("Olay type, player.uuid ve player.name içermelidir.");
   const result = await signedRequest("POST", "/events", event);

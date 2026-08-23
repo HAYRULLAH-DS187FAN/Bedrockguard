@@ -5,6 +5,7 @@ import {
   BookOpenCheck,
   ChevronLeft,
   ClipboardList,
+  Eye,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
@@ -18,6 +19,7 @@ import { Separator } from "./ui/separator";
 
 const navItems = [
   { label: "Gözetim merkezi", path: "/", icon: LayoutDashboard },
+  { label: "Gölge gözlemleri", path: "/observations", icon: Eye },
   { label: "Oyuncular", path: "/players", icon: Users },
   { label: "Yaptırımlar", path: "/sanctions", icon: ClipboardList },
   { label: "Kurallar ve ayarlar", path: "/settings", icon: SlidersHorizontal },

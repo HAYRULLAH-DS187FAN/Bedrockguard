@@ -63,6 +63,29 @@ export const players = mysqlTable(
   }),
 );
 
+export const playerPlatformProfiles = mysqlTable(
+  "player_platform_profiles",
+  {
+    id: varchar("id", { length: 40 }).primaryKey(),
+    serverId: varchar("serverId", { length: 40 }).notNull(),
+    playerUuid: varchar("playerUuid", { length: 96 }).notNull(),
+    clientFamily: mysqlEnum("clientFamily", ["java", "bedrock_direct", "bedrock_geyser", "unknown"]).notNull(),
+    confidence: int("confidence").notNull(),
+    identityProvider: varchar("identityProvider", { length: 32 }),
+    proxyPath: varchar("proxyPath", { length: 40 }),
+    clientVersion: varchar("clientVersion", { length: 64 }),
+    sessionId: varchar("sessionId", { length: 96 }),
+    source: varchar("source", { length: 24 }).notNull(),
+    observedAt: timestamp("observedAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({
+    serverPlayerUnique: uniqueIndex("platform_profile_server_player_unique").on(table.serverId, table.playerUuid),
+    serverFamilyIndex: index("platform_profile_server_family_idx").on(table.serverId, table.clientFamily),
+  }),
+);
+
 export const moderationEvents = mysqlTable(
   "moderation_events",
   {
@@ -97,6 +120,32 @@ export const moderationDetections = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => ({ eventIndex: index("detections_event_idx").on(table.eventId) }),
+);
+
+export const shadowObservations = mysqlTable(
+  "shadow_observations",
+  {
+    id: varchar("id", { length: 40 }).primaryKey(),
+    serverId: varchar("serverId", { length: 40 }).notNull(),
+    eventId: varchar("eventId", { length: 40 }).notNull(),
+    playerUuid: varchar("playerUuid", { length: 96 }).notNull(),
+    playerName: varchar("playerName", { length: 64 }).notNull(),
+    clientFamily: mysqlEnum("clientFamily", ["java", "bedrock_direct", "bedrock_geyser", "unknown"]).notNull(),
+    candidateType: varchar("candidateType", { length: 32 }).notNull(),
+    severity: int("severity").notNull(),
+    evidenceQuality: int("evidenceQuality").notNull(),
+    platformFit: int("platformFit").notNull(),
+    measurementSource: varchar("measurementSource", { length: 32 }).notNull(),
+    status: mysqlEnum("status", ["observed", "suppressed"]).notNull(),
+    suppressionReason: varchar("suppressionReason", { length: 240 }),
+    contextJson: text("contextJson").notNull(),
+    occurredAt: timestamp("occurredAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    serverTimeIndex: index("shadow_observation_server_time_idx").on(table.serverId, table.occurredAt),
+    playerTimeIndex: index("shadow_observation_server_player_time_idx").on(table.serverId, table.playerUuid, table.occurredAt),
+  }),
 );
 
 export const sanctions = mysqlTable(
@@ -177,3 +226,5 @@ export type GuardServer = typeof servers.$inferSelect;
 export type GuardPlayer = typeof players.$inferSelect;
 export type GuardEvent = typeof moderationEvents.$inferSelect;
 export type GuardSanction = typeof sanctions.$inferSelect;
+export type GuardPlatformProfile = typeof playerPlatformProfiles.$inferSelect;
+export type GuardShadowObservation = typeof shadowObservations.$inferSelect;

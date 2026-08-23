@@ -11,13 +11,16 @@ import {
   InsertUser,
   moderationDetections,
   moderationEvents,
+  playerPlatformProfiles,
   players,
   sanctions,
   servers,
+  shadowObservations,
   users,
   whitelistedPlayers,
 } from "../drizzle/schema";
-import { DEFAULT_MODERATION_CONFIG, type AgentEventPayload, type ModerationConfig, type ModerationSignal } from "../shared/guard";
+import { DEFAULT_MODERATION_CONFIG, type AgentEventPayload, type ModerationConfig, type ModerationSignal, type PlatformProfile } from "../shared/guard";
+import type { ShadowAssessment } from "./guard/bedrockAware";
 import { decryptSensitiveValue, encryptSensitiveValue } from "./guard/security";
 import { ENV } from "./_core/env";
 
@@ -77,6 +80,9 @@ export function parseModerationConfig(settingsJson: string): ModerationConfig {
       safeguards: { ...DEFAULT_MODERATION_CONFIG.safeguards, ...parsed.safeguards },
       rules: { ...DEFAULT_MODERATION_CONFIG.rules, ...parsed.rules },
       ai: { ...DEFAULT_MODERATION_CONFIG.ai, ...parsed.ai },
+      // P0/P3 hard invariant: persisted configuration must never enable movement
+      // enforcement. Only observation collection can be toggled for the pilot.
+      bedrockAwareObservation: { ...DEFAULT_MODERATION_CONFIG.bedrockAwareObservation, ...parsed.bedrockAwareObservation, enforcementEnabled: false },
     };
   } catch { return DEFAULT_MODERATION_CONFIG; }
 }
@@ -186,11 +192,49 @@ export async function upsertPlayerAssessment(input: { serverId: string; player: 
   return { ...row, createdAt: now, updatedAt: now } as GuardPlayer;
 }
 
+export async function upsertPlayerPlatformProfile(input: { serverId: string; playerUuid: string; profile: PlatformProfile; observedAt: Date }) {
+  const db = await requireDb();
+  const values = {
+    id: randomUUID(),
+    serverId: input.serverId,
+    playerUuid: input.playerUuid,
+    clientFamily: input.profile.clientFamily,
+    confidence: Math.round(Math.max(0, Math.min(1, input.profile.confidence)) * 100),
+    identityProvider: input.profile.identityProvider ?? null,
+    proxyPath: input.profile.proxyPath ?? null,
+    clientVersion: input.profile.clientVersion?.slice(0, 64) ?? null,
+    sessionId: input.profile.sessionId?.slice(0, 96) ?? null,
+    source: input.profile.source,
+    observedAt: input.observedAt,
+  };
+  await db.insert(playerPlatformProfiles).values(values).onDuplicateKeyUpdate({
+    set: {
+      clientFamily: values.clientFamily,
+      confidence: values.confidence,
+      identityProvider: values.identityProvider,
+      proxyPath: values.proxyPath,
+      clientVersion: values.clientVersion,
+      sessionId: values.sessionId,
+      source: values.source,
+      observedAt: values.observedAt,
+    },
+  });
+  return values;
+}
+
 export async function listPlayers(serverId?: string) {
   const db = await requireDb();
   const query = db.select().from(players);
   const result = serverId ? await query.where(eq(players.serverId, serverId)).orderBy(desc(players.suspicionScore)) : await query.orderBy(desc(players.suspicionScore));
   return result;
+}
+
+export async function listPlayersWithPlatformProfiles(serverId?: string) {
+  const db = await requireDb();
+  const query = db.select({ player: players, platformProfile: playerPlatformProfiles }).from(players).leftJoin(playerPlatformProfiles, and(eq(players.serverId, playerPlatformProfiles.serverId), eq(players.playerUuid, playerPlatformProfiles.playerUuid)));
+  return serverId
+    ? query.where(eq(players.serverId, serverId)).orderBy(desc(players.suspicionScore))
+    : query.orderBy(desc(players.suspicionScore));
 }
 
 export async function recordModerationEvent(input: { serverId: string; event: AgentEventPayload }) {
@@ -220,6 +264,76 @@ export async function recordSignals(eventId: string, signals: ModerationSignal[]
   if (!signals.length) return;
   const db = await requireDb();
   await db.insert(moderationDetections).values(signals.map(signal => ({ id: randomUUID(), eventId, category: signal.category, ruleId: signal.ruleId, label: signal.label, points: signal.points, confidence: Math.round(signal.confidence * 100), explanation: signal.explanation })));
+}
+
+export function buildShadowObservationRecord(input: { serverId: string; eventId: string; event: AgentEventPayload; assessment: ShadowAssessment }) {
+  const observation = input.event.shadowObservation;
+  if (!observation) return;
+  // Persist only the aggregate fields needed for later review. Deliberately
+  // exclude session/client identifiers and any position-trace digest from the
+  // observation context; raw packets are never part of this contract.
+  const safePlatform = {
+    clientFamily: input.assessment.profile.clientFamily,
+    confidence: input.assessment.profile.confidence,
+    source: input.assessment.profile.source,
+    ...(input.assessment.profile.identityProvider ? { identityProvider: input.assessment.profile.identityProvider } : {}),
+    ...(input.assessment.profile.proxyPath ? { proxyPath: input.assessment.profile.proxyPath } : {}),
+  };
+  const safeObservation = {
+    candidateType: observation.candidateType,
+    ...(observation.observedValue !== undefined ? { observedValue: observation.observedValue } : {}),
+    ...(observation.expectedMin !== undefined ? { expectedMin: observation.expectedMin } : {}),
+    ...(observation.expectedMax !== undefined ? { expectedMax: observation.expectedMax } : {}),
+    sampleWindowMs: observation.sampleWindowMs,
+    sampleCount: observation.sampleCount,
+    measurementSource: observation.measurementSource,
+    environmentFlags: observation.environmentFlags,
+    serverEffects: observation.serverEffects,
+    networkQuality: observation.networkQuality,
+  };
+  return {
+    id: randomUUID(),
+    serverId: input.serverId,
+    eventId: input.eventId,
+    playerUuid: input.event.player.uuid,
+    playerName: input.event.player.name,
+    clientFamily: input.assessment.profile.clientFamily,
+    candidateType: input.assessment.candidateType,
+    severity: input.assessment.severity,
+    evidenceQuality: input.assessment.evidenceQuality,
+    platformFit: input.assessment.platformFit,
+    measurementSource: observation.measurementSource,
+    status: input.assessment.status,
+    suppressionReason: input.assessment.suppressionReason ?? null,
+    contextJson: JSON.stringify({ platform: safePlatform, observation: safeObservation }),
+    occurredAt: new Date(input.event.occurredAt),
+  };
+}
+
+export async function recordShadowObservation(input: { serverId: string; eventId: string; event: AgentEventPayload; assessment: ShadowAssessment }) {
+  const row = buildShadowObservationRecord(input);
+  if (!row) return;
+  const db = await requireDb();
+  await db.insert(shadowObservations).values(row);
+  return row;
+}
+
+export async function listRecentShadowObservations(serverId?: string) {
+  const db = await requireDb();
+  const query = db.select().from(shadowObservations);
+  return serverId
+    ? query.where(eq(shadowObservations.serverId, serverId)).orderBy(desc(shadowObservations.occurredAt)).limit(80)
+    : query.orderBy(desc(shadowObservations.occurredAt)).limit(80);
+}
+
+export async function getPlayerPlatformProfile(serverId: string, playerUuid: string) {
+  const db = await requireDb();
+  return (await db.select().from(playerPlatformProfiles).where(and(eq(playerPlatformProfiles.serverId, serverId), eq(playerPlatformProfiles.playerUuid, playerUuid))).limit(1))[0];
+}
+
+export async function listPlayerShadowObservations(serverId: string, playerUuid: string) {
+  const db = await requireDb();
+  return db.select().from(shadowObservations).where(and(eq(shadowObservations.serverId, serverId), eq(shadowObservations.playerUuid, playerUuid))).orderBy(desc(shadowObservations.occurredAt)).limit(80);
 }
 
 export async function listEventDetections(eventId: string) {

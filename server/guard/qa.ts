@@ -1,7 +1,7 @@
 import { DEFAULT_MODERATION_CONFIG } from "../../shared/guard";
 import { ENV } from "../_core/env";
 import type { User } from "../../drizzle/schema";
-import type { listEventDetections, listPlayers, listRecentEvents, listRecentSanctions, listWhitelist, publicServer } from "../db";
+import type { listEventDetections, listPlayers, listRecentEvents, listRecentSanctions, listRecentShadowObservations, listWhitelist, publicServer } from "../db";
 
 type QaServer = ReturnType<typeof publicServer>;
 type QaPlayers = Awaited<ReturnType<typeof listPlayers>>;
@@ -9,6 +9,7 @@ type QaEvents = Awaited<ReturnType<typeof listRecentEvents>>;
 type QaSanctions = Awaited<ReturnType<typeof listRecentSanctions>>;
 type QaDetections = Awaited<ReturnType<typeof listEventDetections>>;
 type QaWhitelist = Awaited<ReturnType<typeof listWhitelist>>;
+type QaShadowObservations = Awaited<ReturnType<typeof listRecentShadowObservations>>;
 
 export const QA_SERVER_ID = "a1b2c3d4-1000-4000-8000-000000000001";
 export const QA_MODE_HEADER = "x-bedrockguard-qa";
@@ -75,31 +76,41 @@ export const qaEvents: QaEvents = [
   { id: "qa-event-5", serverId: QA_SERVER_ID, sourceEventId: "qa-evidence-3001", playerUuid: "qa-gamma-0003", playerName: "QA_Gamma_Trusted", type: "chat", content: "[QA] Whitelist koruma testi", metadataJson: "{\"qa\":true}", occurredAt: at(50), createdAt: at(50) },
 ];
 
+export const qaShadowObservations: QaShadowObservations = [
+  { id: "qa-shadow-1", serverId: QA_SERVER_ID, eventId: "qa-event-2", playerUuid: "qa-alex-0001", playerName: "QA_Alex_Risk", clientFamily: "bedrock_geyser", candidateType: "speed", severity: 58, evidenceQuality: 41, platformFit: 18, measurementSource: "geyser_translated", status: "suppressed", suppressionReason: "Bamboo çevresi ve Geyser çeviri yolu nedeniyle hareket kanıtı güvenilir değil.", contextJson: "{\"platform\":{\"clientFamily\":\"bedrock_geyser\",\"source\":\"floodgate\"},\"observation\":{\"sampleCount\":8,\"environmentFlags\":[\"bamboo_nearby\"],\"networkQuality\":\"jittery\"}}", occurredAt: at(9), createdAt: at(9) },
+  { id: "qa-shadow-2", serverId: QA_SERVER_ID, eventId: "qa-event-5", playerUuid: "qa-gamma-0003", playerName: "QA_Gamma_Trusted", clientFamily: "java", candidateType: "fly", severity: 51, evidenceQuality: 82, platformFit: 89, measurementSource: "bds_authoritative", status: "observed", suppressionReason: null, contextJson: "{\"platform\":{\"clientFamily\":\"java\",\"source\":\"agent\"},\"observation\":{\"sampleCount\":24,\"environmentFlags\":[],\"networkQuality\":\"stable\"}}", occurredAt: at(50), createdAt: at(50) },
+];
+
+const qaPlatformProfiles = {
+  "qa-alex-0001": { id: "qa-profile-1", serverId: QA_SERVER_ID, playerUuid: "qa-alex-0001", clientFamily: "bedrock_geyser" as const, confidence: 94, source: "floodgate" as const, identityProvider: "floodgate", proxyPath: "geyser_velocity", clientVersion: null, sessionId: null, observedAt: at(9), createdAt: at(9), updatedAt: at(9) },
+  "qa-beta-0002": { id: "qa-profile-2", serverId: QA_SERVER_ID, playerUuid: "qa-beta-0002", clientFamily: "bedrock_direct" as const, confidence: 72, source: "agent" as const, identityProvider: "xbox_live", proxyPath: "direct_bds", clientVersion: null, sessionId: null, observedAt: at(6), createdAt: at(6), updatedAt: at(6) },
+  "qa-gamma-0003": { id: "qa-profile-3", serverId: QA_SERVER_ID, playerUuid: "qa-gamma-0003", clientFamily: "java" as const, confidence: 89, source: "agent" as const, identityProvider: "java_online", proxyPath: "unknown", clientVersion: null, sessionId: null, observedAt: at(50), createdAt: at(50), updatedAt: at(50) },
+};
+
 const detections: QaDetections = [
   { id: "qa-detect-1", eventId: "qa-event-1", category: "advertising", ruleId: "link.external", label: "Reklam bağlantısı", points: 30, confidence: 96, explanation: "QA senaryosunda harici bağlantı sinyali.", createdAt: at(4) },
-  { id: "qa-detect-2", eventId: "qa-event-2", category: "suspicious_behavior", ruleId: "movement.speed", label: "Olağan dışı hareket", points: 20, confidence: 91, explanation: "QA hareket hızı eşiği aşıldı.", createdAt: at(9) },
   { id: "qa-detect-3", eventId: "qa-event-3", category: "threat_harassment", ruleId: "chat.harassment", label: "Taciz sinyali", points: 10, confidence: 84, explanation: "QA metin sınıflandırma örneği.", createdAt: at(15) },
   { id: "qa-detect-4", eventId: "qa-event-4", category: "spam", ruleId: "chat.flood", label: "Spam / flood", points: 5, confidence: 98, explanation: "QA tekrar sayısı penceresi aşıldı.", createdAt: at(6) },
 ];
 
 export const qaSanctions: QaSanctions = [
   { id: "qa-sanction-1", serverId: QA_SERVER_ID, playerUuid: "qa-beta-0002", playerName: "QA_Beta_Spam", eventId: "qa-event-4", action: "warning" as const, status: "executed" as const, requiresConfirmation: false, reason: "QA: tekrar eden mesajlara karşı uyarı", durationMinutes: null, requestedByUserId: null, confirmedByUserId: null, confirmedAt: at(5), agentAcknowledgedAt: at(5), executionMessage: "QA simülasyonu — Agent çağrısı yapılmadı.", createdAt: at(6) },
-  { id: "qa-sanction-2", serverId: QA_SERVER_ID, playerUuid: "qa-alex-0001", playerName: "QA_Alex_Risk", eventId: "qa-event-2", action: "kick" as const, status: "pending_confirmation" as const, requiresConfirmation: true, reason: "QA: birleşik reklam ve hareket sinyalleri", durationMinutes: null, requestedByUserId: null, confirmedByUserId: null, confirmedAt: null, agentAcknowledgedAt: null, executionMessage: "QA simülasyonu — yürütme devre dışı.", createdAt: at(3) },
-  { id: "qa-sanction-3", serverId: QA_SERVER_ID, playerUuid: "qa-alex-0001", playerName: "QA_Alex_Risk", eventId: "qa-event-3", action: "temp_ban" as const, status: "pending_confirmation" as const, requiresConfirmation: true, reason: "QA: örnek geçici ban inceleme kaydı", durationMinutes: 60, requestedByUserId: null, confirmedByUserId: null, confirmedAt: null, agentAcknowledgedAt: null, executionMessage: "QA simülasyonu — gerçek ban uygulanmaz.", createdAt: at(1) },
 ];
 
 const qaWhitelist: QaWhitelist = [{ id: "qa-whitelist-1", serverId: QA_SERVER_ID, playerUuid: "qa-gamma-0003", playerName: "QA_Gamma_Trusted", reason: "QA yanlış-pozitif koruma senaryosu", createdByUserId: 0, expiresAt: null, createdAt: at(180) }];
 
 export const qaScenario = {
   overview() {
-    return { servers: [qaServer], metrics: { online: 2, highRisk: 1, pending: 2, eventsToday: qaEvents.length }, players: qaPlayers, events: qaEvents, sanctions: qaSanctions };
+    return { servers: [qaServer], metrics: { online: 2, highRisk: 1, pending: 0, eventsToday: qaEvents.length }, players: qaPlayers, events: qaEvents, sanctions: qaSanctions, shadowObservations: qaShadowObservations };
   },
   players: (serverId?: string) => !serverId || serverId === QA_SERVER_ID ? qaPlayers : [],
+  playerRows: (serverId?: string) => (!serverId || serverId === QA_SERVER_ID) ? qaPlayers.map(player => ({ player, platformProfile: qaPlatformProfiles[player.playerUuid as keyof typeof qaPlatformProfiles] ?? null })) : [],
   detail(serverId: string, playerUuid: string) {
     const player = qaPlayers.find(item => item.serverId === serverId && item.playerUuid === playerUuid);
     if (!player) return null;
     const events = qaEvents.filter(event => event.serverId === serverId && event.playerUuid === playerUuid);
-    return { player, evidence: events.map(event => ({ event, detections: detections.filter(item => item.eventId === event.id) })), sanctions: qaSanctions.filter(item => item.serverId === serverId && item.playerUuid === playerUuid) };
+    return { player, evidence: events.map(event => ({ event, detections: detections.filter(item => item.eventId === event.id) })), sanctions: qaSanctions.filter(item => item.serverId === serverId && item.playerUuid === playerUuid), platformProfile: qaPlatformProfiles[playerUuid as keyof typeof qaPlatformProfiles] ?? null, shadowObservations: qaShadowObservations.filter(item => item.serverId === serverId && item.playerUuid === playerUuid) };
   },
+  observations: (serverId?: string) => !serverId || serverId === QA_SERVER_ID ? qaShadowObservations : [],
   whitelist: (serverId: string) => serverId === QA_SERVER_ID ? qaWhitelist : [],
 };

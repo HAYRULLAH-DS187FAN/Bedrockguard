@@ -23,6 +23,34 @@ export type DetectionCategory =
 
 export type RecommendedAction = "normal" | "watch" | "warning" | "kick" | "review" | "temp_ban";
 
+export type ClientFamily = "java" | "bedrock_direct" | "bedrock_geyser" | "unknown";
+export type MeasurementSource = "bds_authoritative" | "geyser_translated" | "proxy_observed" | "agent_derived";
+export type ShadowCandidateType = "speed" | "fly" | "packet_integrity" | "movement_unknown";
+
+export type PlatformProfile = {
+  clientFamily: ClientFamily;
+  confidence: number;
+  identityProvider?: "floodgate" | "xbox_live" | "java_online" | "offline" | "unknown";
+  proxyPath?: "direct_bds" | "geyser_standalone" | "geyser_velocity" | "geyser_bungeecord" | "unknown";
+  clientVersion?: string;
+  sessionId?: string;
+  source: "bds" | "geyser" | "floodgate" | "agent";
+};
+
+export type ShadowMovementObservation = {
+  candidateType: ShadowCandidateType;
+  observedValue?: number;
+  expectedMin?: number;
+  expectedMax?: number;
+  sampleWindowMs: number;
+  sampleCount: number;
+  measurementSource: MeasurementSource;
+  environmentFlags: string[];
+  serverEffects: string[];
+  networkQuality: "stable" | "jittery" | "loss_suspected" | "unknown";
+  positionTraceDigest?: string;
+};
+
 export type ModerationConfig = {
   scoreHalfLifeHours: number;
   thresholds: {
@@ -58,6 +86,11 @@ export type ModerationConfig = {
     minimumConfidence: number;
     maxSignalPoints: number;
   };
+  bedrockAwareObservation: {
+    enabled: boolean;
+    enforcementEnabled: false;
+    retentionDays: number;
+  };
 };
 
 export const DEFAULT_MODERATION_CONFIG: ModerationConfig = {
@@ -81,6 +114,7 @@ export const DEFAULT_MODERATION_CONFIG: ModerationConfig = {
     maxItemsPerMinute: 256,
   },
   ai: { enabled: false, modelPreference: "gpt-5-mini", minimumConfidence: 0.76, maxSignalPoints: 8 },
+  bedrockAwareObservation: { enabled: true, enforcementEnabled: false, retentionDays: 30 },
 };
 
 export type AgentEventPayload = {
@@ -90,6 +124,8 @@ export type AgentEventPayload = {
   player: { uuid: string; name: string };
   content?: string;
   metadata?: Record<string, unknown>;
+  platform?: PlatformProfile;
+  shadowObservation?: ShadowMovementObservation;
 };
 
 export type ModerationSignal = {
