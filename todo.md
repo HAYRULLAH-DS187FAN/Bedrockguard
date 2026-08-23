@@ -86,3 +86,4 @@
 - [ ] Vercel Vite deployment’ında `/api/trpc` rotasının 404 dönmesine neden olan function yönlendirmesini giderip yeniden doğrulamak.
 - [ ] Vercel Function’ın gerçek `/api/*` yolunu korumasını sağlayarak tRPC ve Agent route’larını canlı hedefte doğrulamak.
 - [ ] Vercel API adapter rewrite’ı üzerinden Express’e aktarılan özgün yolun tRPC, OAuth ve imzalı Agent rotalarında doğru işlendiğini canlı hedefte doğrulamak.
+- [ ] Vercel Function bundle’ında ESM-only bağımlılıkların yüklendiğini ve tRPC sağlık rotasının 500 yerine uygulama yanıtı verdiğini doğrulamak.

@@ -1,4 +1,4 @@
-import app from "./server.cjs";
+import app from "./server.mjs";
 
 function restoreOriginalPath(req) {
   const requestUrl = new URL(req.url || "/", "http://localhost");

@@ -7,6 +7,7 @@ dist/
 public/
 build/
 api/server.cjs
+api/server.mjs
 *.dist
 
 # Environment variables
