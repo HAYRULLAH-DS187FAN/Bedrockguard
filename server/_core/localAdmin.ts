@@ -16,7 +16,12 @@ function normalizeEmail(value: string) {
 function configuredAdmin() {
   const email = normalizeEmail(process.env.LOCAL_ADMIN_EMAIL ?? "");
   const password = process.env.LOCAL_ADMIN_PASSWORD ?? "";
-  return email && password ? { email, password } : null;
+  const sessionSecret = process.env.JWT_SECRET ?? "";
+  // Raw credentials stay only in Vercel encrypted environment storage. Refuse
+  // to activate local auth with a weak password or JWT signing key.
+  return email && password.length >= 12 && sessionSecret.length >= 32
+    ? { email, password }
+    : null;
 }
 
 function requestKey(ip: string | undefined) {

@@ -93,3 +93,4 @@
 - [ ] E-posta/şifre tabanlı yönetici girişini, parola doğrulamasını ve güvenli oturum çerezini uygulamak.
 - [ ] Giriş ekranını Vercel yönetici oturum akışına bağlamak; korumalı rota ve logout davranışını doğrulamak.
 - [ ] Vercel’de gerekli yönetici giriş sırlarını ekleyip production login → dashboard → yenileme → logout akışını doğrulamak.
+- [ ] Vercel yönetici girişini zayıf parola veya kısa JWT oturum sırrıyla etkinleşmeyecek şekilde doğrulamak.

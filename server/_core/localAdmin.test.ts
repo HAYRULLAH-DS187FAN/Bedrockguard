@@ -8,10 +8,12 @@ import {
 
 const originalEmail = process.env.LOCAL_ADMIN_EMAIL;
 const originalPassword = process.env.LOCAL_ADMIN_PASSWORD;
+const originalJwtSecret = process.env.JWT_SECRET;
 
 beforeEach(() => {
   process.env.LOCAL_ADMIN_EMAIL = "admin@bedrockguard.test";
   process.env.LOCAL_ADMIN_PASSWORD = "only-for-automated-tests";
+  process.env.JWT_SECRET = "test-local-admin-session-secret-32chars";
   resetLocalAdminAttemptsForTests();
 });
 
@@ -20,6 +22,8 @@ afterEach(() => {
   else process.env.LOCAL_ADMIN_EMAIL = originalEmail;
   if (originalPassword === undefined) delete process.env.LOCAL_ADMIN_PASSWORD;
   else process.env.LOCAL_ADMIN_PASSWORD = originalPassword;
+  if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
+  else process.env.JWT_SECRET = originalJwtSecret;
   resetLocalAdminAttemptsForTests();
 });
 
