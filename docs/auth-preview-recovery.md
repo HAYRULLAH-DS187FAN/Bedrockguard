@@ -18,9 +18,15 @@ Preview ortamında üç ayrı durum, kullanıcı tarafında “giriş yapıldı 
 | Yetkilendirme | Sahip hesabı eski `user` rolündeyse authenticated request sırasında `admin` yapılır. | Geçerli preview/OAuth session’ın dashboard yetkisinde takılmasını önler. |
 | Günlükleme | Debug collector request/response header’larını maskeleyerek kaydeder. | Authorization bearer veya cookie türevlerinin günlükte görünmesini engeller. |
 
+## Admin Rolü Kalıcılığı
+
+Kullanıcının her girişten sonra tekrar `user` olması, `server/db.ts` içindeki `upsertUser` fonksiyonundan kaynaklanıyordu. OAuth/preview session yenilemesi açık bir rol talep etmese bile fonksiyon, sahip olmayan her kullanıcı için `role: "user"` üretiyor ve bunu duplicate-key update içinde veritabanına yazıyordu. Böylece yönetim arayüzünden manuel olarak verilmiş `admin` rolü sonraki girişte eziliyordu.
+
+Bu güncellemede `buildUserUpsert` rolü yalnızca açıkça istenmişse veya sahip hesabı için yönetici iyileştirmesi gerekiyorsa duplicate-key update’e ekler. Sıradan login/yenileme isteği sadece kimlik/son giriş bilgilerini günceller; mevcut admin rolü korunur. `server/auth.role-persistence.test.ts` bu davranışı hem manuel atanmış admin hem de sahip hesabı için doğrular.
+
 ## Doğrulamalar
 
-`pnpm test` ile 25 test başarılıdır. Session token üretim/doğrulama, geçersiz token reddi, production proxy cookie seçenekleri, logout cookie temizliği ve sahip rolü iyileştirmesi otomatik olarak kapsanır. `pnpm check` ve üretim derlemesi başarıyla tamamlandı.
+`pnpm test` ile 32 test başarılıdır. Session token üretim/doğrulama, geçersiz token reddi, production proxy cookie seçenekleri, logout cookie temizliği, QA session izolasyonu ve admin rolü kalıcılığı otomatik olarak kapsanır. `pnpm check` ve üretim derlemesi başarıyla tamamlandı.
 
 Preview doğrudan dashboard ve oyuncu rotaları için auth kabuğu yüklendi. Otomatik preview token akışında kullanıcı kimliği doğrulamasının çalıştığı, yönetici olmayan rolün ise açık bir `10002` yetki hatası ürettiği doğrulandı. Debug redaction denetiminde yeni bir sentetik Authorization header kaydı maskelendi ve ham bearer değeri kaydedilmedi.
 

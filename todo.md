@@ -57,3 +57,7 @@
 - [x] QA authentication header’ının production modunda reddedildiğini otomatik testle doğrulamak.
 - [x] Production benzeri istekte QA login endpoint’inin 404 döndürdüğünü ve QA header’ının context/protected rota erişimi üretmediğini entegrasyon testiyle doğrulamak.
 - [x] Production benzeri QA header’ının context’te kullanıcı üretmediğini ve admin rotasına erişim vermediğini entegrasyon testiyle doğrulamak.
+- [x] Giriş sonrası kullanıcı rolünü tekrar `user` yapan upsert/senkronizasyon yolunu tespit etmek.
+- [x] Manuel atanmış admin rolünü OAuth/preview oturum yenilemelerinde koruyan kalıcı sunucu tarafı korumayı uygulamak.
+- [x] Sahip hesabı ve atanan admin hesabı için rol kalıcılığını otomatik testlerle doğrulamak.
+- [x] Rol geri dönüşü kök nedenini ve kalıcı çözümü dokümante etmek.

@@ -36,15 +36,27 @@ async function requireDb() {
   return db;
 }
 
-export async function upsertUser(user: InsertUser): Promise<void> {
+export function buildUserUpsert(user: InsertUser, ownerOpenId = ENV.ownerOpenId) {
   if (!user.openId) throw new Error("User openId is required for upsert");
-  const db = await getDb();
-  if (!db) return;
   const values: InsertUser = { openId: user.openId, lastSignedIn: user.lastSignedIn ?? new Date() };
   const updateSet: Record<string, unknown> = { lastSignedIn: values.lastSignedIn };
   (["name", "email", "loginMethod"] as const).forEach(field => { if (user[field] !== undefined) { values[field] = user[field] ?? null; updateSet[field] = user[field] ?? null; } });
-  values.role = user.role ?? (user.openId === ENV.ownerOpenId ? "admin" : "user");
-  updateSet.role = values.role;
+
+  // For an existing account, an OAuth/preview refresh must never downgrade a
+  // manually assigned admin role. Only an explicit role request (or the owner
+  // self-heal) participates in the duplicate-key update.
+  const roleToApply = user.role ?? (user.openId === ownerOpenId ? "admin" : undefined);
+  if (roleToApply !== undefined) {
+    values.role = roleToApply;
+    updateSet.role = roleToApply;
+  }
+  return { values, updateSet };
+}
+
+export async function upsertUser(user: InsertUser): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const { values, updateSet } = buildUserUpsert(user);
   await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
 }
 
