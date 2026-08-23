@@ -98,3 +98,5 @@
 - [ ] Erişim anahtarını Vercel ortam sırrı üzerinden doğrulayan ve sınırlı süreli oturum üreten güvenli giriş prosedürünü eklemek.
 - [ ] Giriş ekranına erişim anahtarı yolunu ekleyip yanlış/eksik anahtar, geçerli giriş, yenileme ve logout davranışlarını test etmek.
 - [ ] Sunucu sahibi erişim anahtarını Vercel’de ekleyip production akışını doğrulamak.
+- [x] Vercel giriş yüzeyini yalnızca `SERVER_OWNER_ACCESS_KEY` ile çalışacak şekilde sadeleştirmek; e-posta/parola giriş UI ve API yolunu kaldırmak.
+- [ ] Tek erişim anahtarı girişinde yanlış anahtar, geçerli anahtar, yenileme ve logout davranışlarını otomatik ve canlı doğrulamak.

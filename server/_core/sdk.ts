@@ -5,10 +5,9 @@ import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
-import * as db from "../db";
 import { ENV } from "./env";
 import { QA_AUTH_OPEN_ID, isLocalQaAuthRequest, qaAuthUser } from "../guard/qa";
-import { localAdminUserFromOpenId, serverOwnerUserFromOpenId } from "./localAdmin";
+import { serverOwnerUserFromOpenId } from "./localAdmin";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -261,13 +260,11 @@ class SDKServer {
     req: Request,
     isProduction = ENV.isProduction
   ): Promise<AuthenticatedUser> {
-    // 1. Prefer the session cookie (regular OAuth login).
+    // 1. Prefer the signed HttpOnly session cookie created after access-key login.
     const cookies = this.parseCookies(req.headers.cookie);
     let sessionToken = cookies.get(COOKIE_NAME);
 
-    // 2. Fallback to the Authorization header (Preview auto-login via
-    //    sessionStorage), used when the browser blocks iframe cookies such as
-    //    Safari ITP, private browsing, or iOS/Android WebView.
+    // 2. QA-only fallback for restricted local preview environments.
     if (!sessionToken) {
       const authHeader = req.headers.authorization;
       if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
@@ -296,11 +293,6 @@ class SDKServer {
       throw ForbiddenError("QA sessions are disabled in production");
     }
 
-    // Vercel local-admin sessions never call the Manus identity service and are
-    // accepted only while the matching admin environment configuration exists.
-    const localAdmin = localAdminUserFromOpenId(session.openId);
-    if (localAdmin) return localAdmin;
-
     // Owner-key sessions are short lived and become invalid as soon as the
     // SERVER_OWNER_ACCESS_KEY environment secret is rotated.
     const serverOwner = serverOwnerUserFromOpenId(session.openId);
@@ -315,55 +307,7 @@ class SDKServer {
       return buildCronUser(userInfo);
     }
 
-    const sessionUserId = session.openId;
-    const signedInAt = new Date();
-    let user = await db.getUserByOpenId(sessionUserId);
-
-    // If user not in DB, sync from OAuth server automatically
-    if (!user) {
-      try {
-        const userInfo = await this.getUserInfoWithJwt(sessionToken ?? "");
-        await db.upsertUser({
-          openId: userInfo.openId,
-          name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-          lastSignedIn: signedInAt,
-        });
-        user = await db.getUserByOpenId(userInfo.openId);
-      } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
-        throw ForbiddenError("Failed to sync user info");
-      }
-    }
-
-    if (!user) {
-      throw ForbiddenError("User not found");
-    }
-
-    // An owner row may have been created before owner configuration was
-    // available. Heal that legacy state during authenticated requests so a
-    // valid preview/OAuth session cannot be trapped behind a stale `user` role.
-    if (shouldPromoteOwner(sessionUserId, user.role)) {
-      await db.upsertUser({
-        openId: user.openId,
-        role: "admin",
-        lastSignedIn: signedInAt,
-      });
-      const promotedUser = await db.getUserByOpenId(sessionUserId);
-      if (!promotedUser) {
-        throw ForbiddenError("User not found after role update");
-      }
-      user = promotedUser;
-    }
-
-    const authenticatedUser = user;
-    await db.upsertUser({
-      openId: authenticatedUser.openId,
-      lastSignedIn: signedInAt,
-    });
-
-    return authenticatedUser;
+    throw ForbiddenError("Yalnızca sunucu sahibi erişim anahtarıyla oluşturulan oturumlar kabul edilir");
   }
 }
 

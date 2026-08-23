@@ -1,7 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { User } from "../../drizzle/schema";
 
-const LOCAL_ADMIN_PREFIX = "local-admin:";
 const OWNER_ACCESS_PREFIX = "server-owner:";
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000;
@@ -11,20 +10,8 @@ type AttemptRecord = { failures: number[]; lockedUntil: number };
 type LoginFailure = "not_configured" | "invalid" | "locked";
 const attempts = new Map<string, AttemptRecord>();
 
-function normalizeEmail(value: string) {
-  return value.trim().toLowerCase();
-}
-
 function hasStrongSessionSecret() {
   return (process.env.JWT_SECRET ?? "").length >= 32;
-}
-
-function configuredAdmin() {
-  const email = normalizeEmail(process.env.LOCAL_ADMIN_EMAIL ?? "");
-  const password = process.env.LOCAL_ADMIN_PASSWORD ?? "";
-  return email && password.length >= 12 && hasStrongSessionSecret()
-    ? { email, password }
-    : null;
 }
 
 function configuredOwnerKey() {
@@ -70,33 +57,8 @@ function resultForFailure(reason: LoginFailure): { ok: false; reason: LoginFailu
   return { ok: false, reason };
 }
 
-export function isLocalAdminConfigured() {
-  return Boolean(configuredAdmin());
-}
-
-export function localAdminOpenId(email: string) {
-  return `${LOCAL_ADMIN_PREFIX}${normalizeEmail(email)}`;
-}
-
 export function serverOwnerOpenId(accessKey: string) {
   return `${OWNER_ACCESS_PREFIX}${fingerprint(accessKey)}`;
-}
-
-export function localAdminUserFromOpenId(openId: string): User | null {
-  const admin = configuredAdmin();
-  if (!admin || openId !== localAdminOpenId(admin.email)) return null;
-  const now = new Date();
-  return {
-    id: 0,
-    openId,
-    email: admin.email,
-    name: "Vercel Yönetici",
-    loginMethod: "local_password",
-    role: "admin",
-    createdAt: now,
-    updatedAt: now,
-    lastSignedIn: now,
-  };
 }
 
 export function serverOwnerUserFromOpenId(openId: string): User | null {
@@ -114,28 +76,6 @@ export function serverOwnerUserFromOpenId(openId: string): User | null {
     updatedAt: now,
     lastSignedIn: now,
   };
-}
-
-export function verifyLocalAdminLogin(input: {
-  email: string;
-  password: string;
-  requestIp?: string;
-}): { ok: true; user: User } | { ok: false; reason: LoginFailure } {
-  const admin = configuredAdmin();
-  if (!admin) return resultForFailure("not_configured");
-
-  const key = requestKey(input.requestIp);
-  if (remainingLockout(key) > 0) return resultForFailure("locked");
-
-  const validEmail = normalizeEmail(input.email) === admin.email;
-  const validPassword = passwordMatches(admin.password, input.password);
-  if (!validEmail || !validPassword) {
-    registerFailure(key);
-    return resultForFailure("invalid");
-  }
-
-  clearFailures(key);
-  return { ok: true, user: localAdminUserFromOpenId(localAdminOpenId(admin.email))! };
 }
 
 export function verifyServerOwnerAccessKey(input: {
@@ -156,6 +96,6 @@ export function verifyServerOwnerAccessKey(input: {
   return { ok: true, user: serverOwnerUserFromOpenId(serverOwnerOpenId(accessKey))! };
 }
 
-export function resetLocalAdminAttemptsForTests() {
+export function resetAccessKeyAttemptsForTests() {
   attempts.clear();
 }

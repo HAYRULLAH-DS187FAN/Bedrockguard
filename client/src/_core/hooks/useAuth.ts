@@ -9,10 +9,6 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  // Login is started via startLogin() in the effect below, only when we actually
-  // navigate — never during render. startLogin() mints a one-time nonce + writes
-  // the state cookie, so calling it per render would overwrite the cookie and
-  // desync it from an in-flight login's `state`.
   const { redirectOnUnauthenticated = false, redirectPath } = options ?? {};
   const utils = trpc.useUtils();
 
@@ -24,12 +20,6 @@ export function useAuth(options?: UseAuthOptions) {
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       utils.auth.me.setData(undefined, null);
-    },
-  });
-
-  const localLoginMutation = trpc.auth.localLogin.useMutation({
-    onSuccess: ({ user }) => {
-      utils.auth.me.setData(undefined, user);
     },
   });
 
@@ -62,11 +52,6 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [logoutMutation, utils]);
 
-  const loginWithPassword = useCallback(async (email: string, password: string) => {
-    await localLoginMutation.mutateAsync({ email, password });
-    await utils.auth.me.invalidate();
-  }, [localLoginMutation, utils]);
-
   const loginWithOwnerKey = useCallback(async (accessKey: string) => {
     await ownerKeyLoginMutation.mutateAsync({ accessKey });
     await utils.auth.me.invalidate();
@@ -83,8 +68,8 @@ export function useAuth(options?: UseAuthOptions) {
     } catch {}
     return {
       user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending || localLoginMutation.isPending || ownerKeyLoginMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? localLoginMutation.error ?? ownerKeyLoginMutation.error ?? null,
+      loading: meQuery.isLoading || logoutMutation.isPending || ownerKeyLoginMutation.isPending,
+      error: meQuery.error ?? logoutMutation.error ?? ownerKeyLoginMutation.error ?? null,
       isAuthenticated: Boolean(meQuery.data),
     };
   }, [
@@ -93,8 +78,6 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.isLoading,
     logoutMutation.error,
     logoutMutation.isPending,
-    localLoginMutation.error,
-    localLoginMutation.isPending,
     ownerKeyLoginMutation.error,
     ownerKeyLoginMutation.isPending,
   ]);
@@ -106,11 +89,8 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return;
     if (redirectPath && window.location.pathname === redirectPath) return;
 
-    // Navigate at this moment only. startLogin() mints the nonce + cookie itself.
     if (redirectPath) {
       window.location.href = redirectPath;
-    } else {
-      startLogin();
     }
   }, [
     redirectOnUnauthenticated,
@@ -124,7 +104,6 @@ export function useAuth(options?: UseAuthOptions) {
     ...state,
     refresh: () => meQuery.refetch(),
     logout,
-    loginWithPassword,
     loginWithOwnerKey,
   };
 }

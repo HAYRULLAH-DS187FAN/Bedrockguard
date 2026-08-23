@@ -27,12 +27,9 @@ const navItems = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, logout, loginWithPassword, loginWithOwnerKey } = useAuth();
+  const { user, loading, logout, loginWithOwnerKey } = useAuth();
   const [location, setLocation] = useLocation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [ownerAccessKey, setOwnerAccessKey] = useState("");
-  const [loginMode, setLoginMode] = useState<"admin" | "owner">("admin");
   const [loginError, setLoginError] = useState("");
   const qaMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get("qa") === "1";
   const qaAuthMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get("qaAuth") === "1";
@@ -49,13 +46,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     event.preventDefault();
     setLoginError("");
     try {
-      if (loginMode === "owner") {
-        await loginWithOwnerKey(ownerAccessKey);
-        setOwnerAccessKey("");
-      } else {
-        await loginWithPassword(email, password);
-      }
-      setPassword("");
+      await loginWithOwnerKey(ownerAccessKey);
+      setOwnerAccessKey("");
     } catch (error) {
       setLoginError(error instanceof Error ? error.message : "Giriş yapılamadı.");
     }
@@ -70,19 +62,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <h1 className="font-display text-3xl font-semibold">BedrockGuard</h1>
           <p className="mt-3 leading-6 text-stone-400">Güvenlik operasyon merkezine erişmek için kimliğinizi doğrulayın.</p>
           <form className="mt-7 space-y-4" onSubmit={submitLogin}>
-            {loginMode === "owner" ? <label className="grid gap-1.5 text-sm font-medium text-stone-200">Sunucu sahibi erişim anahtarı
+            <label className="grid gap-1.5 text-sm font-medium text-stone-200">Sunucu sahibi erişim anahtarı
               <input value={ownerAccessKey} onChange={event => setOwnerAccessKey(event.target.value)} type="password" autoComplete="one-time-code" required className="min-h-11 rounded-xl border border-white/10 bg-black/20 px-3 text-base text-white outline-none transition focus:border-emerald-300/70 focus:ring-2 focus:ring-emerald-300/20" placeholder="Size verilen anahtar" />
-            </label> : <>
-              <label className="grid gap-1.5 text-sm font-medium text-stone-200">Yönetici e-postası
-                <input value={email} onChange={event => setEmail(event.target.value)} type="email" autoComplete="username" required className="min-h-11 rounded-xl border border-white/10 bg-black/20 px-3 text-base text-white outline-none transition focus:border-emerald-300/70 focus:ring-2 focus:ring-emerald-300/20" placeholder="admin@ornek.com" />
-              </label>
-              <label className="grid gap-1.5 text-sm font-medium text-stone-200">Parola
-                <input value={password} onChange={event => setPassword(event.target.value)} type="password" autoComplete="current-password" required className="min-h-11 rounded-xl border border-white/10 bg-black/20 px-3 text-base text-white outline-none transition focus:border-emerald-300/70 focus:ring-2 focus:ring-emerald-300/20" placeholder="••••••••••••" />
-              </label>
-            </>}
+            </label>
             {loginError ? <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-300/[0.08] px-3 py-2 text-sm text-rose-100">{loginError}</p> : null}
-            <Button type="submit" disabled={loading} className="w-full bg-emerald-400 font-semibold text-[#102014] hover:bg-emerald-300 disabled:opacity-60">{loading ? "Giriş yapılıyor…" : loginMode === "owner" ? "Anahtarla giriş yap" : "Güvenli giriş"}</Button>
-            <button type="button" onClick={() => { setLoginMode(loginMode === "admin" ? "owner" : "admin"); setLoginError(""); }} className="w-full text-sm font-medium text-emerald-200 underline-offset-4 hover:underline">{loginMode === "admin" ? "Sunucu sahibi erişim anahtarıyla giriş" : "Yönetici e-postasıyla giriş"}</button>
+            <Button type="submit" disabled={loading} className="w-full bg-emerald-400 font-semibold text-[#102014] hover:bg-emerald-300 disabled:opacity-60">{loading ? "Giriş yapılıyor…" : "Anahtarla giriş yap"}</Button>
           </form>
           {qaAuthMode ? <Button onClick={loginWithQaAuth} variant="outline" className="mt-3 w-full border-amber-300/30 bg-amber-300/[0.08] text-amber-100 hover:bg-amber-300/[0.14]">Yerel QA oturumuyla giriş</Button> : null}
         </section>
